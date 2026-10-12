@@ -54,3 +54,18 @@ A roadmap é incremental. O Claude deve inspecionar o código e marcar apenas ta
 
 ## Regras de priorização
 Bugs que impedem jogar têm prioridade sobre conteúdo novo. Não começar sistemas complexos, backend ou multiplayer sem necessidade documentada. Cada tarefa concluída deve indicar evidência ou teste executado.
+
+## Ajuste de prioridade: direção visual aprovada
+A especificação `docs/VISUAL_DIRECTION_APPROVED.md` foi aprovada pelo usuário e prevalece sobre qualquer item que pressuponha estética genérica ou pixel art.
+
+### Marco prioritário: fatia vertical isométrica de qualidade
+- [ ] Inspecionar a base, stack, assets e limitações de desempenho antes de reescrever sistemas.
+- [ ] Confirmar uma solução de renderização apropriada para arte detalhada e câmera isométrica.
+- [ ] Montar uma arena/ruína gótica com profundidade, iluminação, sombras e atmosfera.
+- [ ] Integrar protagonista e pelo menos um inimigo com silhuetas legíveis e animações essenciais.
+- [ ] Integrar ataque, impacto/efeito, HUD gótico, vida/recursos e objetivo ou minimapa.
+- [ ] Demonstrar progressão RPG concreta, como equipamento/recompensa, atributo ou habilidade.
+- [ ] Capturar e avaliar o jogo funcional no navegador em desktop e viewport estreita.
+- [ ] Registrar assets reais e suas origens no `ASSET_MANIFEST.md`.
+
+**Critério para avançar:** a cena deve se aproximar claramente das referências aprovadas, sem depender de uma única imagem estática e sem comprometer a legibilidade do combate. Não marcar tarefas como concluídas sem implementação e teste reais.
