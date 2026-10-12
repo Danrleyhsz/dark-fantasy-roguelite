@@ -57,7 +57,6 @@ export function damageEnemy(w: World, e: Enemy, dmg: number, dir: number, knock:
     burst(w, e.x, e.y, 0, 24, 'blood', Math.PI * 2);
   }
   if (e.hp <= 0) {
-    w.stats.kills++;
     w.corpses.push({ kind: e.kind, x: e.x, y: e.y, r: e.r, face: e.face, t: 0 });
     burst(w, e.x, e.y, dir, 18, 'bone');
   }

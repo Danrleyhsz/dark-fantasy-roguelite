@@ -167,7 +167,7 @@ body.touch .hud-bottom .orb, body.touch .slots { display: none; }
 
 /* Painel do personagem (pausa). */
 .pause-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
-.character { max-width: 640px; width: 100%; }
+.character { flex: none; max-width: 640px; width: 100%; }
 .character h2 { font-size: 1.1rem; }
 .character h3 { margin: 10px 0 4px; font-size: 0.9rem; color: var(--gold); font-weight: normal; letter-spacing: 0.08em; text-transform: uppercase; }
 .char-cols { display: flex; flex-wrap: wrap; gap: 18px; }

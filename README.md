@@ -1,23 +1,46 @@
 # dark-fantasy-roguelite
 Dark fantasy roguelite for the browser.
 
-Roguelite de ação 2D em fantasia sombria, feito para rodar direto no navegador (TypeScript + Vite + Canvas 2D, sem dependências em tempo de execução).
+RPG de ação isométrico com estrutura roguelite, em fantasia sombria, que roda direto no navegador (desktop e celular). TypeScript + Vite + Canvas 2D, sem dependências em tempo de execução. A arte foi gerada no Google Gemini e processada por um pipeline próprio.
 
-## Rodar
-Requer Node.js 22.18 ou mais recente.
+Um cavaleiro amaldiçoado desce às ruínas de uma catedral, atravessa cinco salas de penitentes, acólitos e flagelantes, escolhe bênçãos que mudam o estilo de luta, coleta equipamentos de raridades variadas e enfrenta o Anjo Caído. Morrer encerra a incursão, mas o nível do herói e as cinzas gastas no Relicário permanecem.
+
+## Jogar
+- **Online:** veja o link do GitHub Pages na seção "Publicação" de `docs/ROADMAP.md`.
+- **Local:** requer Node.js 22.18 ou mais recente.
 
 ```bash
 npm install
 npm run dev        # http://localhost:5173
-npm test           # testes automatizados
-npm run build      # build de produção em dist/
-npm run preview    # serve dist/ em http://localhost:4173
 ```
 
 ## Controles
-- **Mover:** WASD ou setas; no celular, arraste na metade esquerda da tela.
-- **Atacar:** J, Z ou clique (mira no cursor); no celular, toque na metade direita ou no botão Atacar.
-- **Pausar:** Esc, P ou o botão ❚❚.
+| Ação | Teclado e mouse | Toque |
+|---|---|---|
+| Mover | WASD ou setas | arrastar na metade esquerda |
+| Atacar | J, Z ou clique (mira no cursor) | tocar na metade direita ou botão Atacar |
+| Esquivar | Espaço, Shift ou botão direito | botão Esquivar |
+| Ira Flamejante | Q ou E (gasta Fé) | botão Ira |
+| Escolher bênção | clique ou teclas 1, 2 e 3 | tocar na carta |
+| Pausar e ver o personagem | Esc ou P | botão ❚❚ |
 
-## Estado
-Fase 1 concluída: uma sala jogável com movimento, combate, um inimigo (o Penitente), vitória, derrota e reinício. Veja `docs/ROADMAP.md` para o andamento e `docs/` para o design completo.
+## Desenvolvimento
+```bash
+npm test           # 62 testes (lógica, RPG, salvamento, renderização, incursão completa)
+npm run check      # checagem de tipos
+npm run build      # build de produção em dist/
+npm run preview    # serve dist/ em http://localhost:4173
+npm run art        # reprocessa a arte de art/raw/iso/ para public/assets/
+node tools/balance.ts 30   # simula 30 incursões com o bot e resume a dificuldade
+```
+
+Abrir com `?debug` na URL liga atalhos de teste no console (`__debug.room(4)` vai à sala do chefe).
+
+## Documentação
+- `docs/VISUAL_DIRECTION_APPROVED.md`: direção aprovada (prioridade máxima)
+- `docs/GDD.md`: design do jogo e decisões registradas
+- `docs/ART_BIBLE.md`: direção de arte e produção
+- `docs/TECHNICAL_DESIGN.md`: arquitetura, comandos e plano de otimização
+- `docs/ASSET_MANIFEST.md`: inventário de arte e áudio, com origem e licença
+- `docs/ROADMAP.md`: andamento por fase, com evidências
+- `docs/TEST_PLAN.md`: o que foi testado, onde e como

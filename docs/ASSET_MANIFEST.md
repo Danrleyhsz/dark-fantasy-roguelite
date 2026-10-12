@@ -10,41 +10,55 @@ Este documento registra os recursos visuais e sonoros do jogo. Atualize-o sempre
 - Não referenciar arquivos que não existem; validar caminhos antes de concluir uma etapa.
 - Priorizar assets originais e licenças compatíveis com distribuição comercial.
 
-## Inventário inicial
+## Inventário (verificado em 12/10/2026)
 
 | ID | Recurso | Uso | Estado | Caminho verificado / observações |
 |---|---|---|---|---|
-| ENV-001 | Piso e paredes da primeira sala | Cenário jogável | Implementado | `public/assets/environment/floor.jpg`, `wall.jpg`; centro da sala livre |
-| ENV-002 | Elementos de ruína e decoração | Fundo e profundidade | Implementado (parcial) | `public/assets/environment/props.png`: vitral, portas, coluna. Faltam velas, ossos, entulho |
-| CHAR-001 | Personagem do jogador | Movimento e combate | Implementado | `public/assets/characters/player.png` (4 poses) |
-| EN-001 | Inimigo básico corpo a corpo | Primeiro combate | Implementado | `public/assets/enemies/penitent.png` (4 poses, preparação com olhos vermelhos) |
-| EN-002 | Inimigo de ataque à distância | Variedade de combate | Pendente | Fase 2 |
-| EN-003 | Inimigo pesado ou veloz | Variedade de combate | Pendente | Fase 2 |
-| BOSS-001 | Chefe inicial | Encontro final do protótipo | Pendente | Fase 2 |
-| FX-001 | Efeito de impacto | Feedback de dano | Placeholder | Desenhado em código (arco do golpe, partículas, brilho); sem arquivo |
-| FX-002 | Efeito de esquiva | Feedback defensivo | Pendente | A esquiva entra na Fase 2 |
-| UI-001 | Ícones de vida e recursos | HUD | Placeholder | Losangos em CSS (`.pip`) + texto "3/5" |
-| UI-002 | Ícones de armas e melhorias | Escolhas e inventário | Pendente | Fase 2 (recompensas) |
-| SFX-001 | Ataque, impacto e dano | Feedback sonoro | Pendente | Opcional |
-| SFX-002 | Interface e recompensa | Feedback de UI | Pendente | Opcional |
+| ENV-001 | Piso e paredes | Cenário jogável | Implementado | `environment/floor.jpg`, `wall.jpg` (texturas pintadas projetadas na vista isométrica) |
+| ENV-002 | Ruína e decoração | Profundidade e luz | Implementado | `environment/props.png`: vitral, porta fechada/aberta, brasão, coluna, braseiro, estátua de anjo, candelabro |
+| ENV-003 | Ruína gótica isométrica em camadas | Arena jogável | Implementado | Piso, paredes texturizadas, props e atmosfera (luz, névoa, brasas) em elementos separados, montados pelo renderizador |
+| CHAR-001/CHAR-002 | Protagonista (cavaleiro amaldiçoado) | Movimento e combate | Implementado | `characters/hero.png`: 8 poses, frente (sudeste) e costas (nordeste) |
+| EN-001 | Penitente (corpo a corpo) | Primeiro combate | Implementado | `enemies/penitent.png` |
+| EN-002/EN-004 | Acólito (cultista à distância) | Variedade de combate | Implementado | `enemies/acolyte.png`; o projétil (brasa) é desenhado em código |
+| EN-003 | Flagelante (pesado, investida) | Variedade de combate | Implementado | `enemies/brute.png` |
+| BOSS-001 | Anjo Caído | Chefe final | Implementado | `bosses/angel.png` |
+| FX-001 | Efeito de impacto | Feedback de dano | Implementado (código) | Partículas com altura (faíscas, ossos, sangue), brilho branco/vermelho na silhueta, hitstop, números de dano |
+| FX-002 | Efeito de esquiva | Feedback defensivo | Implementado (código) | Rastro de silhuetas translúcidas do próprio sprite |
+| FX-003 | Golpe e magia | Feedback de combate | Implementado (código) | Arco do golpe no chão (aditivo), anel de fogo da Ira Flamejante, brasas e penas com brilho; sem folha de efeitos ainda |
+| UI-001 | Ícones de vida e recursos | HUD | Implementado | Orbes de Vida/Fé em CSS + `ui/icons.png` (cinzas, nível) |
+| UI-002 | Ícones de bênçãos, itens e ações | Escolhas, inventário, HUD | Implementado | `ui/icons.png` (16 ícones) |
+| UI-003 | HUD gótico ornamental | Vida, recursos, habilidades | Implementado (CSS) | Molduras douradas, orbes, slots com recarga, XP, minimapa e objetivo em HTML/CSS; sem folha de molduras pintadas |
+| KEY-001 | Ilustração de capa | Fundo do menu e das telas finais | Implementado | `ui/key-art.jpg` (não é usada como cenário jogável) |
+| SFX-001/SFX-002 | Efeitos sonoros | Golpe, impacto, dano, esquiva, habilidade, saque, nível, porta, vitória/derrota | Implementado (sintetizado) | `src/audio/sfx.ts` (WebAudio, sem arquivos); volume no menu, 0 = mudo |
 | MUS-001 | Música de ambiente | Atmosfera | Pendente | Opcional |
 
 ## Arquivos registrados
 
-Origem comum: **gerados no Google Gemini (app web, conta do usuário, modo Pro) em 11/10/2026**, baixados em JPEG e processados por `npm run art` (`tools/art.mjs`): fundo magenta removido, poses recortadas por componentes conexos, escala e âncora (pés) normalizadas, PNG com paleta. Prompts exatos em `art/PROMPTS.md`; originais em `art/raw/`. **Licença:** conteúdo gerado sob os termos de uso do Google Gemini; sem atribuição exigida conhecida. Revisar os termos antes de uso comercial. **Estado:** em revisão (revisados por Claude; aguardando aprovação do usuário).
+**Origem comum:** gerados no **Google Gemini (app web, modo Pro, conta do usuário, no Chrome)** em 11–12/10/2026, baixados em JPEG (2048–2752 px) para `art/raw/iso/` e processados por `npm run art` (`tools/art.mjs`): fundo magenta removido com descontaminação das bordas, linhas de grade removidas, poses recortadas por componentes conexos, escala única por folha, âncora nos pés, PNG com paleta. Prompts exatos em `art/PROMPTS.md`.
+**Licença:** conteúdo gerado sob os termos de uso do Google Gemini; sem atribuição exigida conhecida. Revisar os termos antes de uso comercial.
+**Estado:** em revisão (revisados por Claude no tamanho real do jogo; aguardando aprovação do usuário).
 
-| ID | Caminho | Uso | Formato e dimensões | Fonte bruta | Observações |
-|---|---|---|---|---|---|
-| CHAR-001 | `public/assets/characters/player.png` | Cavaleiro amaldiçoado | PNG RGBA, 4 quadros de 205×196 (820×196) | `art/raw/player-knight-sheet.jpg` (2048²) | Quadros: idle, run, slash, dodge. Âncora nos pés (102.5, 194). Versão editada no Gemini para segurar a espada na corrida e na esquiva |
-| EN-001 | `public/assets/enemies/penitent.png` | Penitente | PNG RGBA, 4 quadros de 206×196 | `art/raw/penitent-sheet.jpg` (2048²) | Quadros: pray, walk, windup, attack. Usa duas foices em algumas poses e uma em outras (aceito: imperceptível em ~64 px) |
-| ENV-001a | `public/assets/environment/floor.jpg` | Piso ladrilhável | JPEG 512×512 (= 256 px lógicos) | `art/raw/floor-tile.jpg` (2048²) | Contraste comprimido (`linear 0.8, +30`) para os personagens lerem melhor |
-| ENV-001b | `public/assets/environment/wall.jpg` | Alvenaria ladrilhável | JPEG 384×384 (= 192 px lógicos) | `art/raw/wall-masonry.jpg` (2048²) | Emenda vertical leve; invisível na parede do fundo (3 tiles) |
-| ENV-002 | `public/assets/environment/props.png` | Vitral, porta fechada, porta aberta, coluna | PNG RGBA, 4 quadros de 196×196 | `art/raw/props-architecture.jpg` (2048²) | Porta aberta reservada para a saída da sala (Fase 2) |
+Caminhos relativos a `public/assets/`.
 
-Descartados: uma primeira versão do jogador sem espada em duas poses e um piso 16:9 com lajes grandes demais para a escala dos personagens.
+| ID | Caminho | Formato e dimensões | Fonte bruta | Quadros e observações |
+|---|---|---|---|---|
+| CHAR-001 | `characters/hero.png` | PNG, 8 × 252×228 (121 KB) | `iso/hero-sheet.jpg` | idleF, runF, slashF, dodgeF, idleB, runB, slashB, dodgeB. Desenhado com 104 px de altura; espelhado para os lados esquerdos |
+| EN-001 | `enemies/penitent.png` | PNG, 4 × 177×212 (46 KB) | `iso/enemies-a.jpg` (linha 1) | pray, walk, windup (olhos vermelhos), attack |
+| EN-002 | `enemies/acolyte.png` | PNG, 4 × 174×212 (53 KB) | `iso/enemies-a.jpg` (linha 2) | idle, walk, windup (incensário em chamas), throw |
+| EN-003 | `enemies/brute.png` | PNG, 4 × 310×244 (74 KB) | `iso/enemies-b.jpg` (linha 1) | idle, windup, charge, stun |
+| BOSS-001 | `bosses/angel.png` | PNG, 4 × 399×324 (181 KB) | `iso/enemies-b.jpg` (linha 2) | idle, windup, thrust, wings (leque de penas). As penas guardam um leve tom rosado do recorte |
+| ENV-002 | `environment/props.png` | PNG, 8 × 228×228 (140 KB) | `iso/props-a.jpg` | window, doorClosed, doorOpen, plaque (frontais, projetados nas faces das paredes); column, brazier, statue, candelabra (isométricos) |
+| ENV-001a | `environment/floor.jpg` | JPEG 512×512 (42 KB) | `iso/floor-painted.jpg` | Ladrilhável; 1 repetição = 8 tiles. Escurecido (`linear 0.82`) |
+| ENV-001b | `environment/wall.jpg` | JPEG 384×384 (21 KB) | `iso/wall-painted.jpg` | Ladrilhável; a moldura entalhada fica na base das paredes |
+| UI-002 | `ui/icons.png` | PNG, 16 × 100×100 (71 KB) | `iso/icons.jpg` | 8 bênçãos, cinzas, arma, armadura, relíquia, golpe, esquiva, habilidade, nível. O ícone do golpe tem um fundo preto pintado; dois brilhos guardam leve tom rosado |
+| KEY-001 | `ui/key-art.jpg` | JPEG 1600×893 (253 KB) | `iso/key-art.jpg` | Fundo do menu, escurecido por CSS |
+
+Total servido: ~1,1 MB de arte.
+
+**Removidos (substituídos pela direção isométrica pintada):** sprites e texturas de traço chapado da primeira versão (`player.png`, Penitente antigo, piso/parede/props antigos). As fontes antigas continuam no histórico do git.
 
 ## Referências locais (não distribuídas)
-`referencia/` guarda 5 imagens de terceiros usadas só como direção estética (uma com marca d'água de outro autor). A pasta está no `.gitignore` porque o repositório é público; nenhuma delas é usada no jogo nem enviada ao Gemini.
+`referencia/` guarda 5 imagens de terceiros usadas só como direção estética (uma com marca d'água de outro autor). A pasta está no `.gitignore` porque o repositório é público. Nenhuma delas é usada no jogo nem foi enviada ao Gemini.
 
 ## Modelo de registro por recurso
 
@@ -58,23 +72,10 @@ Para cada arquivo, manter:
 - **Estado**: pendente, placeholder, em revisão, aprovado ou removido
 - **Observações**: animações, quadros, ponto de origem, escala e limitações
 
-## Checklist de revisão
-- [ ] O arquivo existe e carrega no navegador.
-- [ ] A escala e o enquadramento combinam com os demais assets.
-- [ ] Personagens e ataques são legíveis em movimento.
-- [ ] Transparência e recortes foram verificados quando aplicável.
-- [ ] Origem e licença estão registradas.
-- [ ] Não há referência quebrada no código.
-
-## Requisitos adicionais da direção aprovada
-Consulte `docs/VISUAL_DIRECTION_APPROVED.md`. Priorizar assets originais de alta qualidade para uma cena isométrica jogável, em vez de imagens promocionais usadas como fundo único.
-
-| ID | Recurso | Uso | Estado inicial | Observações |
-|---|---|---|---|---|
-| ENV-003 | Ruína gótica isométrica em camadas | Arena jogável e profundidade | Pendente | Piso, paredes/arquitetura, decoração e atmosfera em elementos separados quando apropriado |
-| CHAR-002 | Protagonista dark fantasy detalhado | Jogador e animações | Pendente | Orientação isométrica consistente; estados de idle, movimento, ataque, esquiva e dano conforme o escopo |
-| EN-004 | Inimigo cultista/amaldiçoado | Combate inicial | Pendente | Silhueta e preparação de ataque legíveis |
-| FX-003 | Golpe mágico ou arco de arma | Feedback de combate | Pendente | Contraste alto sem esconder personagem ou inimigos |
-| UI-003 | HUD gótico ornamental | Vida, recursos e habilidades | Pendente | Legível em desktop e telas estreitas |
-
-Os itens acima são planejados, não indicam arquivos já existentes. Atualize os caminhos e estados apenas após verificar os arquivos reais.
+## Checklist de revisão (aplicado em 12/10/2026)
+- [x] O arquivo existe e carrega no navegador. *Teste `todo arquivo do manifesto de arte existe` + rede 200 na build.*
+- [x] A escala e o enquadramento combinam com os demais assets. *Alturas por folha em `render.ts` (HEIGHT); conferido em capturas.*
+- [x] Personagens e ataques são legíveis em movimento. *Silhueta do jogador por cima quando encoberto; áreas de perigo sob os personagens.*
+- [x] Transparência e recortes foram verificados quando aplicável. *Prévias sobre xadrez de cada folha; corrigido corte de props pela remoção de grade.*
+- [x] Origem e licença estão registradas.
+- [x] Não há referência quebrada no código. *O manifesto `src/rendering/art.gen.ts` é gerado pelo pipeline; sem imagem, o jogo usa desenho provisório.*

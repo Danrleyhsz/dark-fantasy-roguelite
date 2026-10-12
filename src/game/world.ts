@@ -447,6 +447,7 @@ function updatePlayer(w: World, input: InputState, dt: number): void {
 /** Recompensa de cada abate: experiência, chance de equipamento e a bênção Cálice de Sangue. */
 function rewardKill(w: World, e: Enemy): void {
   const def = CONFIG.enemies[e.kind];
+  w.stats.kills++;
   w.rewarded++;
   gainXp(w, def.xp);
   if (w.rng() < def.drop) w.loot.push({ x: e.x, y: e.y, item: rollItem(w.rng, w.depth, def.dropMin), t: 0 });

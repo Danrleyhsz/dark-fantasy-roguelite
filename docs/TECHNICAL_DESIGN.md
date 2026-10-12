@@ -45,39 +45,61 @@ Leia `docs/VISUAL_DIRECTION_APPROVED.md` antes de escolher a solução de render
 
 ## Implementação atual (decisões registradas)
 
-### Stack escolhida (11/10/2026)
-- **TypeScript 7 + Vite 8**, como recomendado acima. **Canvas 2D** para o mundo, **HTML/CSS** para menus, HUD e controles de toque.
-- **Sem dependências em tempo de execução.** Dependências de desenvolvimento: `vite`, `typescript`, `@types/node` (tipos dos testes) e `sharp` (só o pipeline de arte, `tools/art.mjs`).
-- **Testes com o executor nativo do Node** (`node --test`, Node ≥ 22.18 roda `.ts` diretamente): evita adicionar Vitest. Por isso os imports usam extensão `.ts` e o `tsconfig` exige `erasableSyntaxOnly` (sem `enum`/`namespace`).
-- Build com `--base=./`: a pasta `dist/` funciona em qualquer subcaminho (ex.: GitHub Pages).
+### Stack (11/10/2026, mantida após a direção isométrica)
+- **TypeScript 7 + Vite 8**, **Canvas 2D** para o mundo, **HTML/CSS** para menus, HUD e controles de toque. Avaliado: WebGL ou engine web não foram necessários. Canvas 2D com transformações afins projeta texturas pintadas no isométrico, a iluminação usa um canvas de luz em meia resolução e o jogo roda a 60 fps no Chromium do app.
+- **Sem dependências em tempo de execução.** Desenvolvimento: `vite`, `typescript`, `@types/node` (tipos dos testes) e `sharp` (só o pipeline de arte).
+- **Testes com o executor nativo do Node** (`node --test`; Node ≥ 22.18 roda `.ts` direto). Por isso os imports têm extensão `.ts` e o `tsconfig` exige `erasableSyntaxOnly`.
+- Build com `--base=./`: `dist/` funciona em qualquer subcaminho (GitHub Pages).
 
 ### Comandos
 | Comando | O que faz |
 |---|---|
 | `npm install` | instala as dependências de desenvolvimento |
-| `npm run dev` | servidor de desenvolvimento em http://localhost:5173 |
-| `npm test` | testes de lógica, fluxo e renderização (Node) |
+| `npm run dev` | servidor de desenvolvimento em http://localhost:5173 (`?debug` liga atalhos de teste) |
+| `npm test` | 62 testes de lógica, fluxo, RPG, salvamento e renderização (Node) |
 | `npm run check` | checagem de tipos (`tsc`) |
 | `npm run build` | checagem de tipos + build de produção em `dist/` |
 | `npm run preview` | serve a build de produção em http://localhost:4173 |
-| `npm run art` | reprocessa `art/raw/` em `public/assets/` e regera `src/rendering/art.gen.ts` |
+| `npm run art` | reprocessa `art/raw/iso/` em `public/assets/` e regera `src/rendering/art.gen.ts` |
+| `node tools/balance.ts 30` | simula 30 incursões com o bot dos testes e resume a dificuldade |
 
 ### Estrutura real
-- `src/game/` — regras puras, sem DOM: `config.ts` (valores de equilíbrio centralizados), `room.ts` (mapa, colisão, linha de visão, campo de fluxo BFS), `rooms.ts` (salas), `world.ts` (jogador, inimigos, combate, partículas), `game.ts` (estados de tela), `math.ts`.
-- `src/rendering/` — `render.ts` (desenho), `theme.ts` (paleta), `assets.ts` (carregamento com fallback), `art.gen.ts` (manifesto gerado).
-- `src/input/input.ts` — teclado, mouse e toque. `src/ui/ui.ts` — menus e HUD. `src/main.ts` — laço e ligação de tudo.
-- `public/assets/` — arte processada. `art/raw/` — arte bruta gerada no Gemini (fonte do pipeline). `tools/art.mjs` — pipeline.
-- `tests/` — `node:test`; `helpers.ts` traz um bot de combate e um contexto 2D falso que falha com NaN.
-- `src/persistence/` ainda não existe (não há o que salvar até a Fase 2).
+- `src/game/` — regras puras, sem DOM: `config.ts` (equilíbrio centralizado), `room.ts`/`rooms.ts` (mapas, colisão, linha de visão, campo de fluxo), `world.ts` (incursão, jogador, salas, ondas, saque, projéteis), `enemies.ts` (IA por dados e áreas de perigo), `combat.ts` (dano, cura, partículas, números), `hero.ts` (atributos derivados, nível), `items.ts` (equipamentos e raridade), `upgrades.ts` (bênçãos e Relicário), `game.ts` (estados de tela e progressão salva).
+- `src/rendering/` — `render.ts` (renderizador isométrico), `iso.ts` (projeção), `theme.ts`, `assets.ts` (carga com fallback), `art.gen.ts` (manifesto gerado).
+- `src/input/input.ts` (teclado, mouse, toque), `src/ui/ui.ts` (menus, HUD, minimapa), `src/audio/sfx.ts` (sons sintetizados), `src/persistence/save.ts` (localStorage validado), `src/main.ts` (laço e ligação).
+- `public/assets/` — arte processada. `art/raw/iso/` — originais do Gemini. `tools/` — `art.mjs` (pipeline) e `balance.ts` (simulação).
+- `tests/` — `node:test`; `helpers.ts` tem o bot de combate, o piloto de incursão e um contexto 2D falso que falha com NaN.
 
-### Decisões
-- **Vista top-down 3/4** (decisão não documentada no GDD; escolhida por ser a mais simples para salas, WASD e mira com mouse). Sprites olham para a direita e são espelhados.
-- **Passo fixo de 1/60 s** com acumulador e delta limitado a 0,25 s; a lógica é determinística (PRNG com semente), o que permite testar lutas inteiras no Node.
-- **Mundo lógico de 960×544** (30×17 tiles de 32 px), escalado para a tela mantendo a proporção; canvas respeita o `devicePixelRatio` (limitado a 2).
-- **Estados de tela explícitos** em `game.ts`: `menu`, `playing`, `paused`, `victory`, `defeat`. Reiniciar cria um `World` novo: entidades, timers e efeitos vivem nele, então nada sobra da tentativa anterior. Listeners de entrada são registrados uma única vez.
-- **Pausa automática** ao perder o foco da janela ou trocar de aba; as teclas presas são limpas no `blur`.
-- **Feedback de combate**: hitstop curto, tremor de tela, partículas limitadas (máx. 160), brilho de dano, piscar durante invulnerabilidade, corpos que desvanecem.
-- **Aviso de ataque inimigo** sem depender só de cor: pose de preparação, ícone "!", setor de perigo hachurado no chão que se preenche até o golpe.
-- **Inimigo com campo de fluxo (BFS)** para contornar pilares quando não há linha de visão.
-- **Camada estática** do cenário (piso, paredes, vitrais) pré-renderizada e refeita só no redimensionamento; colunas ficam na camada dinâmica para serem ordenadas por profundidade.
-- `window.__game` fica exposto para os testes de fumaça no navegador.
+### Vista isométrica
+- **Projeção 2:1** em `iso.ts`: mundo `(x, y, z)` → tela `(x − y, (x + y)/2 − z)`. Colisão, combate e IA continuam em coordenadas de mundo; só o desenho e a entrada passam pela projeção.
+- **Entrada:** teclas e joystick indicam direções da **tela** e são convertidas para o mundo (W sobe na tela). O clique é projetado de volta no chão sob o cursor.
+- **Câmera** segue o jogador com suavização e fica presa aos limites da sala. O palco ocupa a tela inteira: em paisagem cabe a vista de referência 960×544, em retrato a escala é pela largura (560 unidades), então os personagens ficam legíveis no celular.
+- **Ordem de desenho:** piso (textura projetada por transformação afim, recortada às lajes) → sombras e áreas de perigo no chão → paredes do fundo (faces norte e oeste texturizadas, com vitrais, brasões e porta) → saque → colunas, braseiros, estátuas, corpos, inimigos e jogador ordenados por `x + y` → projéteis e partículas → muretas baixas ao sul/leste → névoa → luz → ícones, números e vinheta de dano.
+- **Legibilidade:** se algo desenhado depois encobre o jogador, a silhueta dele é redesenhada translúcida por cima.
+- **Luz:** canvas de escuridão em meia resolução com "furos" radiais (jogador, braseiros, candelabros, projéteis, saque, porta aberta e chefe) e brilho aditivo âmbar nas chamas.
+
+### Sistemas de jogo
+- **Incursão:** 5 salas (`CONFIG.run.encounters`). Nas salas 2–4 há duas ondas; a segunda surge longe do jogador, intocável por 0,7 s e com aviso. Vida e dano dos inimigos crescem por sala.
+- **Inimigos por dados:** quatro tipos de ataque reutilizáveis (varredura, investida, rajada e impacto em área) em uma única máquina de estados (`idle → chase → windup → act → recover`, mais `stagger`/`stun`). A mesma geometria de perigo (`dangers()`) aplica o dano, é desenhada no chão e orienta o bot.
+- **RPG:** atributos derivados em uma única função (`deriveStats`) a partir de nível, equipamento, bênçãos e Relicário. Experiência e nível são salvos; equipamento e bênçãos valem só na incursão. Ira Flamejante gasta Fé, o recurso que regenera e sobe a cada golpe.
+- **Telas** (`game.ts`): `menu`, `playing`, `paused`, `reward`, `victory`, `defeat`. Reiniciar cria um mundo novo; os listeners são registrados uma vez.
+- **Salvamento:** chave `dark-fantasy-roguelite/save`, com campos validados e limitados. JSON corrompido ou armazenamento indisponível voltam ao padrão. Falha de escrita mostra um aviso, sem travar.
+- **Áudio:** sons sintetizados com WebAudio a partir das mudanças de estado entre quadros. O áudio é liberado no primeiro gesto e o volume é salvo (0 = mudo).
+- **Depuração:** com `?debug`, `window.__debug.room(n)` vai para a sala `n` e `frames(n)` avança quadros sem `requestAnimationFrame` (útil com o painel oculto). `window.__game` fica sempre exposto para testes de fumaça.
+
+### Plano de otimização (medido e previsto)
+Implementado:
+- Simulação em passo fixo de 1/60 s, com delta limitado a 0,25 s.
+- Partículas limitadas a 240 e removidas por troca com o último elemento.
+- Silhuetas tingidas geradas uma vez por folha.
+- Geometria da sala calculada só ao trocar de sala.
+- Luz em meia resolução.
+- DPR limitado a 2.
+- HUD escreve no DOM só quando o valor muda; o minimapa tem a camada da sala em cache.
+- Arte em PNG com paleta e JPEG: ~1,1 MB no total. JS de 66 KB (25 KB com gzip), CSS de 10 KB.
+
+Próximos passos se o desempenho cair em celulares fracos:
+1. Pré-renderizar piso e paredes do fundo num canvas por sala.
+2. Reaproveitar os gradientes de luz e de névoa em vez de criá-los a cada quadro.
+3. Reduzir a névoa e a luz em telas pequenas ou com "Reduzir clarões" ligado.
+4. Medir com o Performance do Chrome num aparelho real.

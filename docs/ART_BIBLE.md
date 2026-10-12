@@ -31,12 +31,14 @@ Cenários em camadas com profundidade e áreas de combate desobstruídas. HUD mi
 Todo prompt deve especificar: sujeito, vista/câmera, pose, iluminação, paleta, nível de detalhe, fundo/transparência e uso pretendido. Para sprites, pedir orientação consistente, enquadramento uniforme e fundo transparente quando apropriado. Não usar imagem promocional como sprite de gameplay sem recorte e validação.
 
 ## Produção (registro)
-- Sprites e texturas são gerados no **Gemini (app web)**, numa mesma conversa para manter o estilo. Os prompts exatos ficam em `art/PROMPTS.md`, os originais em `art/raw/`, e o processamento é feito por `npm run art`.
-- **Fundo magenta chapado #FF00FF** para recorte (o Gemini não entrega transparência real). Evitar roxo, violeta e rosa nos prompts.
-- Folhas de sprites em grade 2x2, todas as poses voltadas para a direita (o jogo espelha).
-- **Estilo observado:** nos sprites de jogo o Gemini entrega tinta forte com hachura moderada, mais limpa que a gravura pura. Aceito de propósito pela legibilidade em ~64 px. A textura de xilogravura mais pesada fica para ilustrações estáticas (menu, cartas de recompensa).
-- **Paleta final:** valores em `src/rendering/theme.ts`, publicados como variáveis CSS para a interface.
-- Pisos são escuros e de baixo contraste; o pipeline ainda comprime o contraste para a armadura escura do jogador continuar legível.
+- A arte do jogo é gerada no **Gemini (app web, no Chrome do usuário)**, numa mesma conversa para manter o estilo. Os prompts exatos ficam em `art/PROMPTS.md`, os originais em `art/raw/iso/`, e o processamento é feito por `npm run art`.
+- **Estilo aplicado (direção aprovada):** ilustração pintada e detalhada com hachura de tinta à la Gustave Doré e mangá seinen, claro-escuro dramático, materiais gastos, base carvão/cinza-azulado com acentos seletivos de carmesim e dourado e luz âmbar do fogo. Personagens em vista isométrica, com silhueta forte para leitura em ~100 px.
+- **Folhas em grade** (4x2 para personagens e props, 4x4 para ícones) sobre **magenta chapado #FF00FF**. O Gemini não entrega transparência real e às vezes desenha linhas de grade; o pipeline remove as duas coisas (só perto das divisas entre células, para não cortar props).
+- **Direções:** o protagonista tem poses de frente (sudeste) e de costas (nordeste); inimigos e chefe só de frente. O jogo espelha para os lados esquerdos.
+- **Paredes e piso** são texturas ladrilháveis pintadas, projetadas no isométrico pelo renderizador. Vitrais, portas e brasões são sprites frontais aplicados nas faces das paredes; colunas, braseiros, estátuas e candelabros são sprites isométricos.
+- **Efeitos** (golpe, impacto, fogo, brasas, luz, névoa) são desenhados em código com mistura aditiva, para animarem sem custo de arte e sem esconder os perigos.
+- **Paleta da interface:** valores em `src/rendering/theme.ts`, publicados como variáveis CSS; HUD com molduras douradas, orbes e painéis escuros.
+- **Limitações conhecidas:** leve tom rosado em brilhos recortados do magenta (penas do chefe, dois ícones); o ícone do golpe tem um fundo preto pintado.
 
 ## Consistência e direitos
 Registrar caminho, descrição, formato, dimensões, origem, licença e status no ASSET_MANIFEST. Não copiar personagens, logotipos ou arte protegida de jogos existentes. Referências servem para direção estética, não para reprodução literal.
