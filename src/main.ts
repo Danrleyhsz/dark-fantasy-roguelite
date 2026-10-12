@@ -38,12 +38,13 @@ const sfx = createSfx(game.save.settings.volume);
 for (const ev of ['pointerdown', 'keydown'] as const) window.addEventListener(ev, () => sfx.unlock(), { passive: true });
 
 const backdrop = createWorld(FIRST_ROOM, 1); // cena parada atrás do menu
+const images = await loadImages();
+const renderer = createRenderer(ctx, (w, h) => Object.assign(document.createElement('canvas'), { width: w, height: h }), images, game.save.settings);
+// Depois do renderizador: um clique durante o carregamento não pode usar toWorld antes de ele existir.
 const input = createInput(canvas, (clientX, clientY) => {
   const r = canvas.getBoundingClientRect();
   return renderer.toWorld(((clientX - r.left) * canvas.width) / r.width, ((clientY - r.top) * canvas.height) / r.height);
 });
-const images = await loadImages();
-const renderer = createRenderer(ctx, (w, h) => Object.assign(document.createElement('canvas'), { width: w, height: h }), images, game.save.settings);
 
 const begin = () => {
   input.reset();

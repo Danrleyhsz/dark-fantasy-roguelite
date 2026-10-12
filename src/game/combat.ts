@@ -51,7 +51,7 @@ export function damageEnemy(w: World, e: Enemy, dmg: number, dir: number, knock:
   w.hitstop = Math.max(w.hitstop, CONFIG.hitstop);
   w.shake = Math.max(w.shake, 2);
   burst(w, e.x, e.y, dir, 6, 'spark');
-  if (def.boss && e.phase === 1 && e.hp > 0 && e.hp <= def.hp * CONFIG.bossPhase2) {
+  if (def.boss && e.phase === 1 && e.hp > 0 && e.hp <= e.maxHp * CONFIG.bossPhase2) {
     e.phase = 2;
     w.shake = 8;
     burst(w, e.x, e.y, 0, 24, 'blood', Math.PI * 2);

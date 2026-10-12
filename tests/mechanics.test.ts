@@ -58,10 +58,14 @@ test('Flagelante: preparação mostra a faixa da investida; ao bater na parede f
   assert.equal(w.player.hp, w.player.maxHp);
 });
 
-test('chefe entra na fase 2 abaixo de metade da vida e lança mais penas', () => {
+test('chefe entra na fase 2 com metade da vida (escalada pela sala) e lança mais penas', () => {
   const w = arena('angel', 600);
-  const boss = w.enemies[0];
-  damageEnemy(w, boss, Math.ceil(boss.maxHp * (1 - CONFIG.bossPhase2)) + 1, 0);
+  w.depth = CONFIG.run.encounters.length - 1; // sala do chefe: vida maior que a base
+  w.enemies = [];
+  const boss = spawnEnemy(w, 'angel', { x: 600, y: 300 });
+  boss.state = 'chase';
+  assert.ok(boss.maxHp > CONFIG.enemies.angel.hp);
+  damageEnemy(w, boss, Math.ceil(boss.maxHp * (1 - CONFIG.bossPhase2)), 0);
   assert.equal(boss.phase, 2);
   const feathers = CONFIG.enemies.angel.attacks[1] as VolleyAttack;
   boss.attack = 1;
