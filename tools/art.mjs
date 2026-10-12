@@ -174,6 +174,17 @@ function keyMagenta(d) {
       d[o + 1] = clamp(g / a);
       d[o + 2] = clamp((b - (1 - a) * 255) / a);
     }
+    if (a > 0) {
+      // Despill: o magenta refletido na arte (vermelho E azul acima do verde) puxa os dois de volta ao verde.
+      // Só nos tons claros (verde alto: marfim, brilhos, penas): o carmesim-vinho escuro da capa leva azul
+      // de propósito e não pode virar marrom. Dourados têm azul baixo e não mudam.
+      const spill = Math.min(d[o], d[o + 2]) - d[o + 1];
+      const k = Math.min(1, Math.max(0, (d[o + 1] - 60) / 80));
+      if (spill > 0 && k > 0) {
+        d[o] = clamp(d[o] - spill * k);
+        d[o + 2] = clamp(d[o + 2] - spill * k);
+      }
+    }
     d[o + 3] = Math.round(a * 255);
   }
 }

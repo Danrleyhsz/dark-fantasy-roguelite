@@ -38,7 +38,7 @@ Todo prompt deve especificar: sujeito, vista/câmera, pose, iluminação, paleta
 - **Paredes e piso** são texturas ladrilháveis pintadas, projetadas no isométrico pelo renderizador. Vitrais, portas e brasões são sprites frontais aplicados nas faces das paredes; colunas, braseiros, estátuas e candelabros são sprites isométricos.
 - **Efeitos:** folha pintada própria (`fx/fx.jpg`) gerada sobre **preto puro** e desenhada com mistura aditiva: o preto não soma luz, então não precisa de recorte nem deixa franja. Ficam no chão (corte, anel de fogo, onda de impacto, projetados no isométrico) ou na tela (projéteis girados na direção do voo, clarão de impacto, centelhas de nível). A luz geral, a névoa, as partículas e a borda exata do alcance continuam em código para animar sem custo e nunca esconder um perigo.
 - **Paleta da interface:** valores em `src/rendering/theme.ts`, publicados como variáveis CSS; HUD com molduras douradas, orbes e painéis escuros.
-- **Limitações conhecidas:** leve tom rosado em brilhos recortados do magenta (penas do chefe, dois ícones); o ícone do golpe tem um fundo preto pintado.
+- **Limitações conhecidas:** o recorte do magenta agora faz *despill* nos tons claros (marfim, brilhos, penas), sem tocar no carmesim-vinho escuro; ainda sobra um leve tom salmão nas penas do chefe ao lançar o leque e no brilho do ícone da Lâmina Sagrada. O ícone do golpe tem um fundo preto pintado.
 
 ## Consistência e direitos
 Registrar caminho, descrição, formato, dimensões, origem, licença e status no ASSET_MANIFEST. Não copiar personagens, logotipos ou arte protegida de jogos existentes. Referências servem para direção estética, não para reprodução literal.

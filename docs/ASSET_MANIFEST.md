@@ -34,7 +34,7 @@ Este documento registra os recursos visuais e sonoros do jogo. Atualize-o sempre
 
 ## Arquivos registrados
 
-**Origem comum:** gerados no **Google Gemini (app web, modo Pro, conta do usuário, no Chrome)** em 11–12/10/2026, baixados em JPEG (2048–2752 px) para `art/raw/iso/` e processados por `npm run art` (`tools/art.mjs`): fundo magenta removido com descontaminação das bordas, linhas de grade removidas, poses recortadas por componentes conexos, escala única por folha, âncora nos pés, PNG com paleta. Prompts exatos em `art/PROMPTS.md`.
+**Origem comum:** gerados no **Google Gemini (app web, modo Pro, conta do usuário, no Chrome)** em 11–12/10/2026, baixados em JPEG (2048–2752 px) para `art/raw/iso/` e processados por `npm run art` (`tools/art.mjs`): fundo magenta removido com descontaminação das bordas e *despill* nos tons claros, linhas de grade removidas, poses recortadas por componentes conexos, escala única por folha, âncora nos pés, PNG com paleta. Prompts exatos em `art/PROMPTS.md`.
 **Licença:** conteúdo gerado sob os termos de uso do Google Gemini; sem atribuição exigida conhecida. Revisar os termos antes de uso comercial.
 **Estado:** em revisão (revisados por Claude no tamanho real do jogo; aguardando aprovação do usuário).
 
@@ -46,11 +46,11 @@ Caminhos relativos a `public/assets/`.
 | EN-001 | `enemies/penitent.png` | PNG, 4 × 177×212 (46 KB) | `iso/enemies-a.jpg` (linha 1) | pray, walk, windup (olhos vermelhos), attack |
 | EN-002 | `enemies/acolyte.png` | PNG, 4 × 174×212 (53 KB) | `iso/enemies-a.jpg` (linha 2) | idle, walk, windup (incensário em chamas), throw |
 | EN-003 | `enemies/brute.png` | PNG, 4 × 310×244 (74 KB) | `iso/enemies-b.jpg` (linha 1) | idle, windup, charge, stun |
-| BOSS-001 | `bosses/angel.png` | PNG, 4 × 399×324 (181 KB) | `iso/enemies-b.jpg` (linha 2) | idle, windup, thrust, wings (leque de penas). As penas guardam um leve tom rosado do recorte |
+| BOSS-001 | `bosses/angel.png` | PNG, 4 × 399×324 (181 KB) | `iso/enemies-b.jpg` (linha 2) | idle, windup, thrust, wings (leque de penas). As penas do leque ficam levemente salmão (o despill reduziu o rosa) |
 | ENV-002 | `environment/props.png` | PNG, 8 × 228×228 (140 KB) | `iso/props-a.jpg` | window, doorClosed, doorOpen, plaque (frontais, projetados nas faces das paredes); column, brazier, statue, candelabra (isométricos) |
 | ENV-001a | `environment/floor.jpg` | JPEG 512×512 (42 KB) | `iso/floor-painted.jpg` | Ladrilhável; 1 repetição = 8 tiles. Escurecido (`linear 0.82`) |
 | ENV-001b | `environment/wall.jpg` | JPEG 384×384 (21 KB) | `iso/wall-painted.jpg` | Ladrilhável; a moldura entalhada fica na base das paredes |
-| UI-002 | `ui/icons.png` | PNG, 16 × 100×100 (71 KB) | `iso/icons.jpg` | 8 bênçãos, cinzas, arma, armadura, relíquia, golpe, esquiva, habilidade, nível. O ícone do golpe tem um fundo preto pintado; dois brilhos guardam leve tom rosado |
+| UI-002 | `ui/icons.png` | PNG, 16 × 100×100 (71 KB) | `iso/icons.jpg` | 8 bênçãos, cinzas, arma, armadura, relíquia, golpe, esquiva, habilidade, nível. O ícone do golpe tem um fundo preto pintado; o brilho da Lâmina Sagrada é levemente salmão |
 | KEY-001 | `ui/key-art.jpg` | JPEG 1600×893 (253 KB) | `iso/key-art.jpg` | Fundo do menu, escurecido por CSS |
 | FX-001/FX-003 | `fx/fx.jpg` | JPEG, 8 × 200×200 sobre preto (63 KB) | `iso/fx-a.jpg` | ember, feather, wave, impact, slash, fireRing, shockwave, motes. **Fundo preto, sem recorte:** desenhado com mistura aditiva (preto não soma nada), então não há franja rosada. Geometria do corte e dos anéis medida no quadro e registrada em `render.ts` (FX_SLASH, FX_RING, FX_SHOCK) |
 
