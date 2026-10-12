@@ -27,6 +27,11 @@ const JOBS = [
     id: 'icons', src: 'art/raw/iso/icons.jpg', out: 'ui/icons.png', grid: [4, 4], gridLines: true, fit: 'box', size: 96,
     frames: ['vigor', 'reach', 'swift', 'shadowStep', 'lifesteal', 'thorns', 'holyWave', 'deflect', 'ash', 'weapon', 'armor', 'relic', 'attack', 'dodge', 'skill', 'level'],
   },
+  // Efeitos (FX-003): fundo preto, desenhados com mistura aditiva (preto = nada); sem recorte de cor.
+  {
+    id: 'fx', additive: true, src: 'art/raw/iso/fx-a.jpg', out: 'fx/fx.jpg', grid: [4, 2], size: 192,
+    frames: ['ember', 'feather', 'wave', 'impact', 'slash', 'fireRing', 'shockwave', 'motes'],
+  },
   // Ilustração do menu (não é cenário jogável).
   { id: 'keyArt', texture: true, src: 'art/raw/iso/key-art.jpg', out: 'ui/key-art.jpg', width: 1600, height: 893 },
   // Texturas: só redimensionadas (cobrindo o quadro) e comprimidas.
@@ -42,7 +47,7 @@ const LO = 50, HI = 160; // "magentice" (min(R,B) - G) abaixo de LO é opaco, ac
 async function main() {
   const manifest = {};
   for (const job of JOBS) {
-    manifest[job.id] = job.texture ? await processTexture(job) : await processSheet(job);
+    manifest[job.id] = job.texture ? await processTexture(job) : job.additive ? await processAdditive(job) : await processSheet(job);
     const m = manifest[job.id];
     console.log(job.texture ? `${job.id}: ${m.width}x${m.height}` : `${job.id}: ${m.frameW}x${m.frameH} x${job.frames.length}`);
   }
@@ -105,6 +110,47 @@ async function processSheet(job) {
     anchorX: frameW / 2, anchorY: job.fit === 'height' ? frameH - pad : frameH / 2,
     frames: job.frames,
   };
+}
+
+/**
+ * Folha de efeitos sobre preto: cada célula é recortada pela caixa dos pixels acesos e cabe num
+ * quadrado `size` (centro = centro do efeito). O preto do fundo é zerado (ponto preto) para a mistura
+ * aditiva não somar o ruído do JPEG.
+ */
+async function processAdditive(job) {
+  const { data, info } = await sharp(job.src).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+  const { width: w, height: h } = info;
+  const FLOOR = 14, LIT = 40;
+  for (let i = 0; i < data.length; i++) data[i] = data[i] <= FLOOR ? 0 : Math.round(((data[i] - FLOOR) * 255) / (255 - FLOOR));
+  const [gx, gy] = job.grid, cellW = w / gx, cellH = h / gy, pad = 4;
+  const frameW = job.size + 2 * pad, layers = [];
+  for (let i = 0; i < job.frames.length; i++) {
+    const cx = i % gx, cy = Math.floor(i / gx);
+    const x0c = Math.round(cx * cellW), x1c = Math.round((cx + 1) * cellW), y0c = Math.round(cy * cellH), y1c = Math.round((cy + 1) * cellH);
+    let bx0 = Infinity, by0 = Infinity, bx1 = -1, by1 = -1;
+    for (let y = y0c; y < y1c; y++) {
+      for (let x = x0c; x < x1c; x++) {
+        const o = (y * w + x) * 3;
+        if (Math.max(data[o], data[o + 1], data[o + 2]) < LIT) continue;
+        if (x < bx0) bx0 = x; if (x > bx1) bx1 = x;
+        if (y < by0) by0 = y; if (y > by1) by1 = y;
+      }
+    }
+    if (bx1 < 0) throw new Error(`${job.id}: célula ${i} (${job.frames[i]}) vazia`);
+    // Folga para o brilho fraco ao redor, sem passar da célula.
+    const m = 10;
+    bx0 = Math.max(x0c, bx0 - m); by0 = Math.max(y0c, by0 - m); bx1 = Math.min(x1c - 1, bx1 + m); by1 = Math.min(y1c - 1, by1 + m);
+    const fw = bx1 - bx0 + 1, fh = by1 - by0 + 1, s = Math.min(job.size / fw, job.size / fh);
+    const tw = Math.max(1, Math.round(fw * s)), th = Math.max(1, Math.round(fh * s));
+    const input = await sharp(data, { raw: { width: w, height: h, channels: 3 } })
+      .extract({ left: bx0, top: by0, width: fw, height: fh }).resize(tw, th, { kernel: 'lanczos3' }).png().toBuffer();
+    layers.push({ input, left: i * frameW + Math.round((frameW - tw) / 2), top: Math.round((frameW - th) / 2) });
+  }
+  const file = ROOT + job.out;
+  await mkdir(dirname(file), { recursive: true });
+  await sharp({ create: { width: frameW * job.frames.length, height: frameW, channels: 3, background: { r: 0, g: 0, b: 0 } } })
+    .composite(layers).jpeg({ quality: 88, mozjpeg: true, chromaSubsampling: '4:4:4' }).toFile(file);
+  return { src: 'assets/' + job.out, frameW, frameH: frameW, anchorX: frameW / 2, anchorY: frameW / 2, frames: job.frames, additive: true };
 }
 
 async function processTexture(job) {

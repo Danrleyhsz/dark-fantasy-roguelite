@@ -111,6 +111,24 @@ export const ART = {
       "level"
     ]
   },
+  "fx": {
+    "src": "assets/fx/fx.jpg",
+    "frameW": 200,
+    "frameH": 200,
+    "anchorX": 100,
+    "anchorY": 100,
+    "frames": [
+      "ember",
+      "feather",
+      "wave",
+      "impact",
+      "slash",
+      "fireRing",
+      "shockwave",
+      "motes"
+    ],
+    "additive": true
+  },
   "keyArt": {
     "src": "assets/ui/key-art.jpg",
     "width": 1600,

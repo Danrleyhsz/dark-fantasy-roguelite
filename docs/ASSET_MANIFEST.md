@@ -19,12 +19,12 @@ Este documento registra os recursos visuais e sonoros do jogo. Atualize-o sempre
 | ENV-003 | Ruína gótica isométrica em camadas | Arena jogável | Implementado | Piso, paredes texturizadas, props e atmosfera (luz, névoa, brasas) em elementos separados, montados pelo renderizador |
 | CHAR-001/CHAR-002 | Protagonista (cavaleiro amaldiçoado) | Movimento e combate | Implementado | `characters/hero.png`: 8 poses, frente (sudeste) e costas (nordeste) |
 | EN-001 | Penitente (corpo a corpo) | Primeiro combate | Implementado | `enemies/penitent.png` |
-| EN-002/EN-004 | Acólito (cultista à distância) | Variedade de combate | Implementado | `enemies/acolyte.png`; o projétil (brasa) é desenhado em código |
+| EN-002/EN-004 | Acólito (cultista à distância) | Variedade de combate | Implementado | `enemies/acolyte.png`; o projétil (brasa) vem da folha de efeitos `fx/fx.jpg` |
 | EN-003 | Flagelante (pesado, investida) | Variedade de combate | Implementado | `enemies/brute.png` |
 | BOSS-001 | Anjo Caído | Chefe final | Implementado | `bosses/angel.png` |
-| FX-001 | Efeito de impacto | Feedback de dano | Implementado (código) | Partículas com altura (faíscas, ossos, sangue), brilho branco/vermelho na silhueta, hitstop, números de dano |
+| FX-001 | Efeito de impacto | Feedback de dano | Implementado | Clarão pintado (`fx/fx.jpg`, quadro impact) no corpo atingido, maior no crítico; mais partículas em código (faíscas, ossos, sangue), brilho na silhueta, hitstop e números de dano |
 | FX-002 | Efeito de esquiva | Feedback defensivo | Implementado (código) | Rastro de silhuetas translúcidas do próprio sprite |
-| FX-003 | Golpe e magia | Feedback de combate | Implementado (código) | Arco do golpe no chão (aditivo), anel de fogo da Ira Flamejante, brasas e penas com brilho; sem folha de efeitos ainda |
+| FX-003 | Golpe e magia | Feedback de combate | Implementado | `fx/fx.jpg`: corte (recortado ao setor que acerta; no Montante com borda de fogo), anel de fogo da Ira Flamejante, brasa do Acólito, penas e onda de impacto do chefe, onda da Lâmina Sagrada, centelhas ao subir de nível. A estocada do Estoque e a borda exata do alcance continuam em código |
 | UI-001 | Ícones de vida e recursos | HUD | Implementado | Orbes de Vida/Fé em CSS + `ui/icons.png` (cinzas, nível) |
 | UI-002 | Ícones de bênçãos, itens e ações | Escolhas, inventário, HUD | Implementado | `ui/icons.png` (16 ícones) |
 | UI-003 | HUD gótico ornamental | Vida, recursos, habilidades | Implementado (CSS) | Molduras douradas, orbes, slots com recarga, XP, minimapa e objetivo em HTML/CSS; sem folha de molduras pintadas |
@@ -52,8 +52,9 @@ Caminhos relativos a `public/assets/`.
 | ENV-001b | `environment/wall.jpg` | JPEG 384×384 (21 KB) | `iso/wall-painted.jpg` | Ladrilhável; a moldura entalhada fica na base das paredes |
 | UI-002 | `ui/icons.png` | PNG, 16 × 100×100 (71 KB) | `iso/icons.jpg` | 8 bênçãos, cinzas, arma, armadura, relíquia, golpe, esquiva, habilidade, nível. O ícone do golpe tem um fundo preto pintado; dois brilhos guardam leve tom rosado |
 | KEY-001 | `ui/key-art.jpg` | JPEG 1600×893 (253 KB) | `iso/key-art.jpg` | Fundo do menu, escurecido por CSS |
+| FX-001/FX-003 | `fx/fx.jpg` | JPEG, 8 × 200×200 sobre preto (63 KB) | `iso/fx-a.jpg` | ember, feather, wave, impact, slash, fireRing, shockwave, motes. **Fundo preto, sem recorte:** desenhado com mistura aditiva (preto não soma nada), então não há franja rosada. Geometria do corte e dos anéis medida no quadro e registrada em `render.ts` (FX_SLASH, FX_RING, FX_SHOCK) |
 
-Total servido: ~1,1 MB de arte.
+Total servido: ~1,1 MB de arte (1,04 MiB).
 
 **Removidos (substituídos pela direção isométrica pintada):** sprites e texturas de traço chapado da primeira versão (`player.png`, Penitente antigo, piso/parede/props antigos). As fontes antigas continuam no histórico do git.
 

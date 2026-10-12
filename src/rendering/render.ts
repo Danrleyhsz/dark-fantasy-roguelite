@@ -34,11 +34,22 @@ const FLOOR_TILE = 8 * T, WALL_TILE = 6 * T;
 /** Altura na tela da pose mais alta de cada folha. */
 const HEIGHT: Record<string, number> = { hero: 104, player: 92, penitent: 92, acolyte: 98, brute: 126, angel: 210 };
 const PARTICLE_COLOR = { spark: '#f3e3b8', bone: THEME.bone, blood: THEME.blood, holy: THEME.gold, ember: '#ffb347' };
-const FLOATER_COLOR = { dmg: '#f3e3b8', crit: '#ffcf5a', heal: '#9fe28f', hurt: '#ff6b6b', info: THEME.gold };
+const FLOATER_COLOR = { dmg: '#f3e3b8', crit: '#ffcf5a', heal: '#9fe28f', hurt: '#ff6b6b', info: THEME.gold, level: THEME.gold };
 const PROP = { window: 0, doorClosed: 1, doorOpen: 2, plaque: 3, column: 4, brazier: 5, statue: 6, candelabra: 7 };
 /** Tamanho (px de tela) da célula do prop isométrico desenhado sobre cada tile sólido de decoração. */
 const PROP_SIZE: Record<string, number> = { o: 158, b: 84, s: 118, c: 112 };
 const PROP_FRAME: Record<string, number> = { o: PROP.column, b: PROP.brazier, s: PROP.statue, c: PROP.candelabra };
+/**
+ * Folha de efeitos (FX-003, fundo preto, mistura aditiva). Geometria medida no quadro de 200 px:
+ * centro e raio da borda externa do corte, dos anéis e o ângulo da pena (ajuste de círculo nos pixels acesos).
+ * Se a arte for refeita, medir de novo.
+ */
+const FX = { ember: 0, feather: 1, wave: 2, impact: 3, slash: 4, fireRing: 5, shockwave: 6, motes: 7 };
+const FX_SLASH = { cx: 93, cy: 104, r: 93, bisector: -0.634 };
+const FX_RING = { cx: 99, cy: 105, r: 75 };
+const FX_SHOCK = { cx: 102, cy: 103, r: 76 };
+const FX_FEATHER_AXIS = -0.70;
+const IMPACT_TIME = 0.14;
 /** Posições na folha de ícones (UI-002): 8 bênçãos, cinzas, depois arma/armadura/relíquia e ações. */
 export const ICON = { ash: 8, weapon: 9, armor: 10, relic: 11, attack: 12, dodge: 13, skill: 14, level: 15 };
 
@@ -110,6 +121,7 @@ export function createRenderer(ctx: CanvasRenderingContext2D, makeCanvas: MakeCa
     ground();
     for (const b of [w.player as { x: number; y: number; r: number }, ...w.enemies]) shadow(b.x, b.y, b.r);
     for (const e of w.enemies) for (const d of dangers(e)) drawDanger(d, e, w.time);
+    for (const e of w.enemies) drawShockwave(e);
     if (w.player.swing) drawSlash(w.player);
     if (w.player.spin > 0) drawSkillRing(w.player);
     drawBackWalls(geo, w);
@@ -139,6 +151,7 @@ export function createRenderer(ctx: CanvasRenderingContext2D, makeCanvas: MakeCa
       ctx.globalAlpha = 1;
     }
     for (const q of w.projectiles) drawProjectile(q, w.time);
+    for (const f of w.floaters) drawImpact(f);
     drawParticles(w);
     drawFront(geo);
     drawFog(w.time);
@@ -782,15 +795,29 @@ export function createRenderer(ctx: CanvasRenderingContext2D, makeCanvas: MakeCa
     } else {
       // Espada e Montante: arco; o Montante é mais largo, grosso e em brasa.
       const heavy = st.weapon === 'greatsword', start = s.dir - st.arc / 2, end = start + st.arc * sweep;
-      ctx.strokeStyle = heavy ? 'rgba(255,140,60,0.9)' : 'rgba(255,214,140,0.9)';
-      ctx.lineWidth = heavy ? 16 : 9;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, range - (heavy ? 14 : 10), start, end);
-      ctx.stroke();
+      if (images.fx) {
+        // Corte pintado, recortado ao setor já varrido: cobre exatamente a área que acerta.
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.arc(p.x, p.y, range + 8, start, end);
+        ctx.closePath();
+        ctx.clip();
+        const k = range / FX_SLASH.r, rot = s.dir - FX_SLASH.bisector;
+        drawFx(FX.slash, p.x, p.y, rot, k, fade, FX_SLASH.cx, FX_SLASH.cy);
+        if (heavy) drawFx(FX.fireRing, p.x, p.y, rot, (range - 8) / FX_RING.r, 0.7 * fade, FX_RING.cx, FX_RING.cy);
+        ctx.restore();
+      } else {
+        ctx.strokeStyle = heavy ? 'rgba(255,140,60,0.9)' : 'rgba(255,214,140,0.9)';
+        ctx.lineWidth = heavy ? 16 : 9;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, range - (heavy ? 14 : 10), start, end);
+        ctx.stroke();
+      }
       ctx.strokeStyle = THEME.ivory;
-      ctx.lineWidth = heavy ? 4 : 3;
+      ctx.lineWidth = heavy ? 3 : 2;
       ctx.beginPath();
-      ctx.arc(p.x, p.y, range - 3, start, end);
+      ctx.arc(p.x, p.y, range - 2, start, end);
       ctx.stroke();
     }
     ctx.restore();
@@ -799,6 +826,7 @@ export function createRenderer(ctx: CanvasRenderingContext2D, makeCanvas: MakeCa
   /** Ira Flamejante: anel de fogo que se expande no chão até o raio de dano. */
   function drawSkillRing(p: Player): void {
     const sk = CONFIG.player.skill, k = 1 - p.spin / sk.duration, r = sk.radius * (0.35 + 0.65 * k);
+    if (drawFx(FX.fireRing, p.x, p.y, k * 1.4, r / FX_RING.r, 1 - k * 0.5, FX_RING.cx, FX_RING.cy)) return;
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
     ctx.globalAlpha = 1 - k * 0.6;
@@ -847,9 +875,48 @@ export function createRenderer(ctx: CanvasRenderingContext2D, makeCanvas: MakeCa
     ctx.restore();
   }
 
+  /** Quadro da folha de efeitos com mistura aditiva (preto = nada), centrado em (cx, cy) do quadro. */
+  function drawFx(frame: number, x: number, y: number, rot: number, s: number, alpha: number, cx = 100, cy = 100): boolean {
+    const img = images.fx, def = SHEETS.fx;
+    if (!img || !def || alpha <= 0) return !!img;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = Math.min(1, alpha);
+    ctx.translate(x, y);
+    ctx.rotate(rot);
+    ctx.scale(s, s);
+    ctx.drawImage(img, frame * def.frameW, 0, def.frameW, def.frameH, -cx, -cy, def.frameW, def.frameH);
+    ctx.restore();
+    return true;
+  }
+
+  /** Clarão no corpo do inimigo atingido (número de dano recém-criado); centelhas sagradas ao subir de nível. */
+  function drawImpact(f: Floater): void {
+    if (f.kind === 'level') {
+      const k = f.t / FLOATER_TIME;
+      drawFx(FX.motes, isoX(f.x, f.y), isoY(f.x, f.y, 52 + k * 26), 0, 0.55, Math.min(1, (1 - k) * 2));
+      return;
+    }
+    if ((f.kind !== 'dmg' && f.kind !== 'crit') || f.t >= IMPACT_TIME) return;
+    const crit = f.kind === 'crit', k = f.t / IMPACT_TIME;
+    drawFx(FX.impact, isoX(f.x, f.y), isoY(f.x, f.y, f.z * 0.6), (f.x * 7 + f.y * 3) % TAU, (crit ? 0.42 : 0.3) * (0.8 + 0.4 * k), 1 - k);
+  }
+
+  /** Impacto do chefe no chão: onda dourada que se abre até o raio do golpe. */
+  function drawShockwave(e: Enemy): void {
+    const atk = currentAttack(e);
+    if (atk.kind !== 'slam' || (e.state !== 'act' && (e.state !== 'recover' || e.t > 0.3))) return;
+    const t = e.state === 'act' ? e.t : 0.15 + e.t, k = Math.min(1, t / 0.45);
+    drawFx(FX.shockwave, e.x, e.y, 0, (atk.radius * (0.45 + 0.6 * k)) / FX_SHOCK.r, 1 - k, FX_SHOCK.cx, FX_SHOCK.cy);
+  }
+
   function drawProjectile(q: Projectile, time: number): void {
     const x = isoX(q.x, q.y), y = isoY(q.x, q.y, 26);
     const ang = Math.atan2(isoY(q.vx, q.vy) , isoX(q.vx, q.vy));
+    // Brasa com a cabeça (núcleo) na posição; pena girada pelo próprio eixo; onda centrada.
+    if (q.kind === 'ember' && drawFx(FX.ember, x, y, ang, 0.3, 1, 155, 100)) return;
+    if (q.kind === 'feather' && drawFx(FX.feather, x, y, ang - FX_FEATHER_AXIS, 0.22, 1)) return;
+    if (q.kind === 'wave' && drawFx(FX.wave, x, y, ang, 0.24, 0.95, 124, 101)) return;
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
     if (q.kind === 'ember') {

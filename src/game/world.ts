@@ -98,7 +98,7 @@ export interface Projectile { x: number; y: number; vx: number; vy: number; r: n
 export type ParticleKind = 'spark' | 'bone' | 'blood' | 'holy' | 'ember';
 /** z = altura acima do chão; faíscas caem e ficam no chão, brasas sobem. */
 export interface Particle { x: number; y: number; z: number; vx: number; vy: number; vz: number; life: number; max: number; size: number; kind: ParticleKind }
-export type FloaterKind = 'dmg' | 'crit' | 'heal' | 'hurt' | 'info';
+export type FloaterKind = 'dmg' | 'crit' | 'heal' | 'hurt' | 'info' | 'level';
 /** Número/texto flutuante (dano, cura, nível) que sobe e some. */
 export interface Floater { x: number; y: number; z: number; text: string; t: number; kind: FloaterKind }
 export const FLOATER_TIME = 0.9;
@@ -230,7 +230,7 @@ export function gainXp(w: World, amount: number): void {
     w.stats.levelsGained++;
     recomputeStats(w);
     if (p.hp > 0) heal(w, Math.round(p.maxHp * CONFIG.levels.heal));
-    floater(w, p.x, p.y, `Nível ${p.level}!`, 'info', 95);
+    floater(w, p.x, p.y, `Nível ${p.level}!`, 'level', 95);
     burst(w, p.x, p.y, 0, 20, 'holy', Math.PI * 2);
   }
   if (p.level >= CONFIG.levels.max) p.xp = 0;

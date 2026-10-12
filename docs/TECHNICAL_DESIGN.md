@@ -61,7 +61,7 @@ Leia `docs/VISUAL_DIRECTION_APPROVED.md` antes de escolher a solução de render
 | `npm run check` | checagem de tipos (`tsc`) |
 | `npm run build` | checagem de tipos + build de produção em `dist/` |
 | `npm run preview` | serve a build de produção em http://localhost:4173 |
-| `npm run art` | reprocessa `art/raw/iso/` em `public/assets/` e regera `src/rendering/art.gen.ts` |
+| `npm run art` | reprocessa `art/raw/iso/` em `public/assets/` (folhas sobre magenta, efeitos sobre preto) e regera `src/rendering/art.gen.ts` |
 | `npm run deploy` | build + publica `dist/` no ramo `gh-pages` (`tools/deploy.mjs`) |
 | `node tools/balance.ts 30 all` | simula 30 incursões por arma com o bot dos testes e resume a dificuldade |
 
@@ -78,6 +78,7 @@ Leia `docs/VISUAL_DIRECTION_APPROVED.md` antes de escolher a solução de render
 - **Câmera** segue o jogador com suavização e fica presa aos limites da sala. O palco ocupa a tela inteira: em paisagem cabe a vista de referência 960×544, em retrato a escala é pela largura (560 unidades), então os personagens ficam legíveis no celular.
 - **Ordem de desenho:** piso (textura projetada por transformação afim, recortada às lajes) → sombras e áreas de perigo no chão → paredes do fundo (faces norte e oeste texturizadas, com vitrais, brasões e porta) → saque → colunas, braseiros, estátuas, corpos, inimigos e jogador ordenados por `x + y` → projéteis e partículas → muretas baixas ao sul/leste → névoa → luz → ícones, números e vinheta de dano.
 - **Legibilidade:** se algo desenhado depois encobre o jogador, a silhueta dele é redesenhada translúcida por cima.
+- **Efeitos pintados:** `drawFx` desenha quadros de `fx/fx.jpg` com mistura aditiva (preto = nada). O corte é recortado ao setor já varrido do golpe, então o rastro pintado coincide com a área que acerta. Sem a imagem, cada efeito volta ao desenho em código.
 - **Luz:** canvas de escuridão em meia resolução com "furos" radiais (jogador, braseiros, candelabros, projéteis, saque, porta aberta e chefe) e brilho aditivo âmbar nas chamas.
 
 ### Sistemas de jogo
