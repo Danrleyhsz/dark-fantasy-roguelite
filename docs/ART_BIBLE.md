@@ -40,3 +40,15 @@ Todo prompt deve especificar: sujeito, vista/câmera, pose, iluminação, paleta
 
 ## Consistência e direitos
 Registrar caminho, descrição, formato, dimensões, origem, licença e status no ASSET_MANIFEST. Não copiar personagens, logotipos ou arte protegida de jogos existentes. Referências servem para direção estética, não para reprodução literal.
+
+## Direção visual aprovada: referência principal
+Consulte `docs/VISUAL_DIRECTION_APPROVED.md`. Esta seção substitui qualquer leitura anterior que conduza a uma aparência de gravura simples, pixel art ou protótipo geométrico.
+
+- Buscar ilustração dark fantasy altamente detalhada: volumes pintados, armaduras gastas, pedra antiga, tecidos, ossos, metal, fogo e magia com materiais distintos.
+- Composição de gameplay em perspectiva isométrica vista de cima; profundidade por arquitetura em camadas, sombras, névoa, luz quente de tochas e acentos frios no ambiente.
+- Paleta-base: carvão, cinza-azulado, marrom de pedra, vermelho vinho e fogo âmbar; dourado envelhecido em relíquias e elementos de HUD. Ajustar contraste para leitura real.
+- Protagonista, inimigos e chefes precisam de silhuetas únicas, detalhes reconhecíveis e animações claras de preparação, ataque, impacto, esquiva e derrota.
+- A interface pode ser ornamental e gótica, mas deve continuar legível e não cobrir áreas críticas da luta.
+- Criar recursos originais coerentes entre si. As referências são guias estéticos, não autorização para copiar arte, personagens ou logotipos de terceiros.
+- Não usar uma ilustração promocional única como fundo que simule uma arena funcional. Preparar recursos apropriados para cenário, personagens, efeitos e UI.
+- Validar os assets na escala final do navegador. Detalhe visual não pode obscurecer inimigos, ataques, colisões ou itens.

@@ -10,6 +10,17 @@ Este repositório contém um roguelite dark fantasy 2D para navegador. Leia este
 5. `docs/ROADMAP.md`
 6. `docs/TEST_PLAN.md`
 
+## Uso do Gemini para geração de imagens
+
+- Verifique se a integração/extensão do Gemini já configurada no Claude Desktop está disponível como ferramenta capaz de **gerar imagens**, e não apenas conversar ou enviar prompts.
+- Quando a geração de imagens estiver disponível, use o Gemini para criar recursos visuais originais do jogo, seguindo rigorosamente `docs/ART_BIBLE.md`.
+- Planeje e gere recursos conforme as necessidades reais da etapa atual, incluindo personagens, inimigos, cenários, chefes, ícones, efeitos visuais e spritesheets quando apropriado.
+- Mantenha coerência visual entre os recursos: silhuetas legíveis, paleta definida na ART_BIBLE, iluminação e nível de detalhe consistentes, e adequação à escala do jogo no navegador.
+- Salve os arquivos no diretório de assets do próprio repositório, organizados por categoria e com nomes descritivos. Registre cada recurso em `docs/ASSET_MANIFEST.md`, incluindo finalidade, caminho, estado e origem/licença quando aplicável.
+- Confira dimensões, transparência, recortes e legibilidade dos arquivos antes de integrá-los. Não substitua automaticamente arte final por formas geométricas ou imagens genéricas.
+- Se a integração não permitir gerar imagens, não afirme que gerou recursos e não invente arquivos. Informe objetivamente a limitação, identifique o que a ferramenta realmente permite fazer e continue com placeholders claramente identificados enquanto prepara os requisitos para a geração.
+- Não exponha nem grave chaves de API, tokens ou credenciais nos arquivos do projeto. Se uma configuração adicional for necessária, descreva-a sem incluir segredos no repositório.
+
 ## Regras de trabalho
 - Trabalhe apenas neste repositório; não misture código ou arquivos de outros projetos.
 - Antes de codificar, inspecione a estrutura existente e preserve alterações válidas.
@@ -33,3 +44,6 @@ Gerar imagens pelo Gemini **no navegador** (app web na conta do usuário), não 
 
 ## Critério de conclusão
 Uma tarefa só está concluída quando a funcionalidade funciona no navegador, os testes relevantes passam, não há erros conhecidos ignorados e a documentação está atualizada.
+
+## Direção aprovada pelo usuário (prioridade máxima)
+Antes de implementar, leia `docs/VISUAL_DIRECTION_APPROVED.md`. A direção aprovada é RPG de ação com progressão, câmera de cima em perspectiva isométrica e ilustração dark fantasy detalhada, seguindo de perto as referências visuais originais aprovadas. Não regredir para pixel art, formas geométricas genéricas ou estética plana. Desenvolva uma fatia vertical visualmente representativa com cenário gótico, protagonista, inimigos, efeitos e HUD integrados. Inspecione primeiro a base existente; não afirme que as referências são assets do jogo nem use uma imagem estática para simular gameplay. Preserve legibilidade e desempenho no navegador. Atualize GDD, ART_BIBLE, TECHNICAL_DESIGN, ROADMAP e ASSET_MANIFEST de acordo com a especificação aprovada.
