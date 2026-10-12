@@ -50,3 +50,16 @@ Para cada arquivo, manter:
 - [ ] Transparência e recortes foram verificados quando aplicável.
 - [ ] Origem e licença estão registradas.
 - [ ] Não há referência quebrada no código.
+
+## Requisitos adicionais da direção aprovada
+Consulte `docs/VISUAL_DIRECTION_APPROVED.md`. Priorizar assets originais de alta qualidade para uma cena isométrica jogável, em vez de imagens promocionais usadas como fundo único.
+
+| ID | Recurso | Uso | Estado inicial | Observações |
+|---|---|---|---|---|
+| ENV-003 | Ruína gótica isométrica em camadas | Arena jogável e profundidade | Pendente | Piso, paredes/arquitetura, decoração e atmosfera em elementos separados quando apropriado |
+| CHAR-002 | Protagonista dark fantasy detalhado | Jogador e animações | Pendente | Orientação isométrica consistente; estados de idle, movimento, ataque, esquiva e dano conforme o escopo |
+| EN-004 | Inimigo cultista/amaldiçoado | Combate inicial | Pendente | Silhueta e preparação de ataque legíveis |
+| FX-003 | Golpe mágico ou arco de arma | Feedback de combate | Pendente | Contraste alto sem esconder personagem ou inimigos |
+| UI-003 | HUD gótico ornamental | Vida, recursos e habilidades | Pendente | Legível em desktop e telas estreitas |
+
+Os itens acima são planejados, não indicam arquivos já existentes. Atualize os caminhos e estados apenas após verificar os arquivos reais.
