@@ -38,3 +38,6 @@ Este repositório contém um roguelite dark fantasy 2D para navegador. Leia este
 
 ## Critério de conclusão
 Uma tarefa só está concluída quando a funcionalidade funciona no navegador, os testes relevantes passam, não há erros conhecidos ignorados e a documentação está atualizada.
+
+## Direção aprovada pelo usuário (prioridade máxima)
+Antes de implementar, leia `docs/VISUAL_DIRECTION_APPROVED.md`. A direção aprovada é RPG de ação com progressão, câmera de cima em perspectiva isométrica e ilustração dark fantasy detalhada, seguindo de perto as referências visuais originais aprovadas. Não regredir para pixel art, formas geométricas genéricas ou estética plana. Desenvolva uma fatia vertical visualmente representativa com cenário gótico, protagonista, inimigos, efeitos e HUD integrados. Inspecione primeiro a base existente; não afirme que as referências são assets do jogo nem use uma imagem estática para simular gameplay. Preserve legibilidade e desempenho no navegador. Atualize GDD, ART_BIBLE, TECHNICAL_DESIGN, ROADMAP e ASSET_MANIFEST de acordo com a especificação aprovada.
