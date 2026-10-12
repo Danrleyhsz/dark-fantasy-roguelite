@@ -30,3 +30,13 @@ Evitar alocações desnecessárias por frame, eventos duplicados e loops sem lim
 
 ## Testes
 Executar os comandos reais definidos no projeto. Verificar inicialização, movimento, colisões, dano, pausa, vitória/derrota, reinício, salvamento, controles por toque e build de produção. Relatar somente testes que foram executados.
+
+## Requisitos técnicos da direção visual aprovada
+Leia `docs/VISUAL_DIRECTION_APPROVED.md` antes de escolher a solução de renderização. A meta é RPG de ação isométrico com arte dark fantasy detalhada, não um jogo top-down plano.
+
+- Inspecionar a stack atual antes de decidir. Se Canvas 2D não conseguir atender à qualidade e ao pipeline de assets desejados com desempenho razoável, avaliar WebGL ou uma engine web leve e justificar a escolha.
+- Separar lógica do jogo e renderização. Organizar o renderizador para cenário em camadas, entidades, animações, efeitos, iluminação/névoa e HUD.
+- Definir escala de mundo, ordenação de profundidade/eixo Y, colisões e projeção isométrica de forma consistente; manter movimento e ataques previsíveis.
+- Carregar assets com fallback explícito, controlar tamanho e quantidade de texturas e otimizar efeitos para navegadores desktop e celulares.
+- A primeira fatia vertical deve usar arte real integrada em pelo menos cenário, protagonista, um inimigo, um efeito e HUD. Placeholders só temporários e identificados.
+- Não alegar fidelidade visual final com base apenas em mockups ou imagens geradas; validar com uma cena jogável capturada do navegador.
