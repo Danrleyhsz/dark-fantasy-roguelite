@@ -1,0 +1,6 @@
+node_modules/
+dist/
+.claude/settings.local.json
+
+# Imagens de referência de terceiros: só direção estética (ART_BIBLE). O repositório é público; não distribuir.
+referencia/

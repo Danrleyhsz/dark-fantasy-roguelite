@@ -52,6 +52,21 @@ A história é contada por detalhes de cenário, descrições curtas, relíquias
 ## Fora do escopo do primeiro protótipo
 Multiplayer, PvP, backend obrigatório, mundo aberto, geração procedural complexa, dezenas de classes, loja com dinheiro real e sistemas online. Só considerar depois que o núcleo estiver divertido e estável.
 
+## Decisões registradas na implementação
+Decisões que o GDD não definia, escolhidas pela opção mais simples e reversível e ajustadas à direção aprovada. Valores exatos em `src/game/config.ts`.
+- **Câmera:** isométrica 2:1, seguindo o jogador. As paredes norte e oeste mostram a face interna; as muretas sul e leste são baixas para não esconder a luta.
+- **Controles:** WASD/setas movem na direção da tela; J, Z ou clique atacam (o clique mira no chão sob o cursor); Espaço, Shift ou botão direito esquivam; Q ou E usam a Ira Flamejante; Esc ou P pausam. No toque: joystick à esquerda, toque à direita ou botão Atacar, botões Esquivar e Ira.
+- **Combate:** golpe com a arma escolhida (base: 10 de dano, 8% de crítico ×1,75); esquiva com invulnerabilidade; 1 s de invulnerabilidade após dano. Todo ataque inimigo tem preparação visível (pose, "!" e área hachurada no chão).
+- **Arquétipos de arma (escolha no menu, salva):** todos da família da espada, para combinar com o herói pintado. **Espada Longa:** arco médio e equilibrado; cada golpe que acerta rende o dobro de Fé (favorece a Ira Flamejante). **Montante:** arco largo, lento e pesado (×1,8 de dano, empurra mais); quebra a guarda e interrompe a preparação de Penitentes e Acólitos (não do Flagelante nem do chefe). **Estoque:** estocada longa, estreita e rápida (+10% de crítico); alcança de fora do golpe do Penitente, mas exige mira. As armas encontradas no chão são do arquétipo em uso e só mudam os números.
+- **Inimigos:** Penitente (golpe de foice em arco), Acólito (mantém distância e arremessa brasas), Flagelante (investida em linha; fica atordoado ao bater na parede) e o chefe Anjo Caído (estocada, leque de penas e impacto em área; fase 2 abaixo de 50% de vida, com preparações mais curtas e mais penas).
+- **Incursão:** 5 salas (Nave em Ruínas, Corredor dos Penitentes, Cripta Profanada, Claustro Queimado e Altar do Anjo Caído). As salas 2–4 têm duas ondas, e os inimigos ficam mais fortes a cada sala. Limpar uma sala oferece 3 **bênçãos** e só então a porta norte abre.
+- **Bênçãos (build da incursão):** Coração de Espinhos, Lâmina Longa, Fúria Penitente, Passo Sombrio, Cálice de Sangue, Coroa de Espinhos, Lâmina Sagrada e Auréola Partida. Cada uma muda a estratégia (alcance, ritmo, esquiva ofensiva, cura por abate, retaliação, onda à distância, rebater projéteis).
+- **Progressão RPG:** nível 1–20 com experiência por abate. Cada nível dá +1 em Força (dano), Vitalidade (vida) e Destreza (velocidade e crítico) e cura 30%. **Nível e experiência persistem entre incursões.**
+- **Equipamento:** arma, armadura e relíquia, com raridade Comum, Mágico, Raro ou Lendário (cor e nome). O item cai no chão; ao pegar, é equipado se for melhor ou convertido em cinzas. Equipamento e bênçãos valem só para a incursão.
+- **Habilidade e recurso:** Ira Flamejante (giro de fogo ao redor, empurra e queima projéteis) gasta 35 de **Fé**, que regenera e sobe a cada golpe que acerta.
+- **Entre incursões:** cinzas (abates + salas + itens convertidos + vitória) compram melhorias permanentes no **Relicário** (vida máxima, velocidade do golpe, recarga da esquiva, até 3 níveis cada).
+- **Título provisório:** "Dark Fantasy Roguelite" (nome do repositório) até haver um nome definido.
+
 ## Critérios de sucesso do protótipo
 - Abre em navegador moderno sem instalação especial.
 - Jogador move, ataca, sofre dano e pode derrotar um inimigo.
