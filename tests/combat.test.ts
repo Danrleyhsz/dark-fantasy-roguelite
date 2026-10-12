@@ -17,6 +17,7 @@ function duel(gap: number, state: 'idle' | 'chase' = 'chase'): World {
   w.player.x = 480; w.player.y = 300;
   const e = w.enemies[0];
   e.x = 480 + gap; e.y = 300; e.state = state;
+  w.player.stats.critChance = 0; // dano previsível
   return w;
 }
 

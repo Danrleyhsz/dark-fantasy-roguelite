@@ -6,7 +6,7 @@ import { chooseUpgrade, createRun, stepWorld, type InputState, type World } from
 /** Estados explícitos de tela (TECHNICAL_DESIGN). A simulação só avança em 'playing'. */
 export type Screen = 'menu' | 'playing' | 'paused' | 'reward' | 'victory' | 'defeat';
 
-export interface RunResult { victory: boolean; ashes: number; newBest: boolean }
+export interface RunResult { victory: boolean; ashes: number; newBest: boolean; levelsGained: number }
 
 export interface Game {
   screen: Screen;
@@ -25,7 +25,7 @@ export function createGame(storage: StorageLike | null = null): Game {
 
 /** Nova incursão: o mundo anterior é descartado inteiro (entidades, timers e efeitos vivem nele). */
 export function startRun(g: Game, seed: number): void {
-  g.world = createRun(seed, g.save.meta);
+  g.world = createRun(seed, g.save.meta, g.save.hero);
   g.result = null;
   g.screen = 'playing';
 }
@@ -35,8 +35,9 @@ export function setPaused(g: Game, paused: boolean): void {
   else if (!paused && g.screen === 'paused') g.screen = 'playing';
 }
 
-/** Abandonar a incursão não rende cinzas. */
+/** Abandonar a incursão não rende cinzas, mas a experiência do herói é mantida. */
 export function quitToMenu(g: Game): void {
+  if (g.world && (g.screen === 'paused' || g.screen === 'playing' || g.screen === 'reward')) keepHero(g, g.world);
   g.world = null;
   g.screen = 'menu';
 }
@@ -55,10 +56,15 @@ export function pickReward(g: Game, id: UpgradeId): void {
   if (!g.world.offer) g.screen = 'playing';
 }
 
-/** Cinzas da incursão: abates + salas limpas + bônus de vitória. */
+/** Cinzas da incursão: abates + salas limpas + equipamentos convertidos + bônus de vitória. */
 export function ashesFor(w: World): number {
   const R = CONFIG.run;
-  return w.stats.kills * R.ashesPerKill + w.stats.roomsCleared * R.ashesPerRoom + (w.outcome === 'victory' ? R.ashesVictory : 0);
+  return w.stats.kills * R.ashesPerKill + w.stats.roomsCleared * R.ashesPerRoom + w.runAshes + (w.outcome === 'victory' ? R.ashesVictory : 0);
+}
+
+function keepHero(g: Game, w: World): void {
+  g.save.hero = { level: w.player.level, xp: w.player.xp };
+  g.saved = writeSave(g.storage, g.save);
 }
 
 function finishRun(g: Game, w: World, outcome: 'victory' | 'defeat'): void {
@@ -68,8 +74,8 @@ function finishRun(g: Game, w: World, outcome: 'victory' | 'defeat'): void {
   if (outcome === 'victory') s.best.wins++;
   const newBest = reached > s.best.depth;
   s.best.depth = Math.max(s.best.depth, reached);
-  g.result = { victory: outcome === 'victory', ashes, newBest };
-  g.saved = writeSave(g.storage, s);
+  g.result = { victory: outcome === 'victory', ashes, newBest, levelsGained: w.stats.levelsGained };
+  keepHero(g, w);
   g.screen = outcome;
 }
 
@@ -85,5 +91,10 @@ export function buyMeta(g: Game, id: MetaId): boolean {
 
 export function setReduceMotion(g: Game, on: boolean): void {
   g.save.settings.reduceMotion = on;
+  g.saved = writeSave(g.storage, g.save);
+}
+
+export function setVolume(g: Game, volume: number): void {
+  g.save.settings.volume = Math.min(1, Math.max(0, volume));
   g.saved = writeSave(g.storage, g.save);
 }

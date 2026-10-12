@@ -17,25 +17,12 @@ export const ART = {
       "dodgeB"
     ]
   },
-  "player": {
-    "src": "assets/characters/player.png",
-    "frameW": 205,
-    "frameH": 196,
-    "anchorX": 102.5,
-    "anchorY": 194,
-    "frames": [
-      "idle",
-      "run",
-      "slash",
-      "dodge"
-    ]
-  },
   "penitent": {
     "src": "assets/enemies/penitent.png",
-    "frameW": 206,
-    "frameH": 196,
-    "anchorX": 103,
-    "anchorY": 194,
+    "frameW": 177,
+    "frameH": 212,
+    "anchorX": 88.5,
+    "anchorY": 210,
     "frames": [
       "pray",
       "walk",
@@ -43,17 +30,60 @@ export const ART = {
       "attack"
     ]
   },
+  "acolyte": {
+    "src": "assets/enemies/acolyte.png",
+    "frameW": 174,
+    "frameH": 212,
+    "anchorX": 87,
+    "anchorY": 210,
+    "frames": [
+      "idle",
+      "walk",
+      "windup",
+      "throw"
+    ]
+  },
+  "brute": {
+    "src": "assets/enemies/brute.png",
+    "frameW": 310,
+    "frameH": 244,
+    "anchorX": 155,
+    "anchorY": 242,
+    "frames": [
+      "idle",
+      "windup",
+      "charge",
+      "stun"
+    ]
+  },
+  "angel": {
+    "src": "assets/bosses/angel.png",
+    "frameW": 399,
+    "frameH": 324,
+    "anchorX": 199.5,
+    "anchorY": 322,
+    "frames": [
+      "idle",
+      "windup",
+      "thrust",
+      "wings"
+    ]
+  },
   "props": {
     "src": "assets/environment/props.png",
-    "frameW": 196,
-    "frameH": 196,
-    "anchorX": 98,
-    "anchorY": 98,
+    "frameW": 228,
+    "frameH": 228,
+    "anchorX": 114,
+    "anchorY": 114,
     "frames": [
       "window",
       "doorClosed",
       "doorOpen",
-      "column"
+      "plaque",
+      "column",
+      "brazier",
+      "statue",
+      "candelabra"
     ]
   },
   "floor": {

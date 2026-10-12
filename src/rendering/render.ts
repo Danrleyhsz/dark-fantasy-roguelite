@@ -1,8 +1,9 @@
 import { CONFIG } from '../game/config.ts';
-import { dangers, windupTime, type Danger } from '../game/enemies.ts';
+import { currentAttack, dangers, windupTime, type Danger } from '../game/enemies.ts';
 import { TAU, mulberry32 } from '../game/math.ts';
 import type { Point, Room } from '../game/room.ts';
 import { CORPSE_TIME, FLOATER_TIME, type Corpse, type Enemy, type Floater, type Player, type Projectile, type World } from '../game/world.ts';
+import { RARITY } from '../game/items.ts';
 import { ART } from './art.gen.ts';
 import { isoX, isoY, screenToWorld, worldAngleToScreen } from './iso.ts';
 import { THEME } from './theme.ts';
@@ -32,10 +33,15 @@ const FLOOR_TILE = 8 * T, WALL_TILE = 6 * T;
 const HEIGHT: Record<string, number> = { hero: 104, player: 92, penitent: 92, acolyte: 98, brute: 126, angel: 210 };
 const PARTICLE_COLOR = { spark: '#f3e3b8', bone: THEME.bone, blood: THEME.blood, holy: THEME.gold, ember: '#ffb347' };
 const FLOATER_COLOR = { dmg: '#f3e3b8', crit: '#ffcf5a', heal: '#9fe28f', hurt: '#ff6b6b', info: THEME.gold };
-const PROP = { window: 0, doorClosed: 1, doorOpen: 2, column: 3 };
+const PROP = { window: 0, doorClosed: 1, doorOpen: 2, plaque: 3, column: 4, brazier: 5, statue: 6, candelabra: 7 };
+/** Tamanho (px de tela) da célula do prop isométrico desenhado sobre cada tile sólido de decoração. */
+const PROP_SIZE: Record<string, number> = { o: 158, b: 84, s: 118, c: 112 };
+const PROP_FRAME: Record<string, number> = { o: PROP.column, b: PROP.brazier, s: PROP.statue, c: PROP.candelabra };
+/** Posições na folha de ícones (UI-002): 8 bênçãos, cinzas, depois arma/armadura/relíquia e ações. */
+export const ICON = { ash: 8, weapon: 9, armor: 10, relic: 11, attack: 12, dodge: 13, skill: 14, level: 15 };
 
 interface Face { tx: number; ty: number; side: 'S' | 'E' }
-interface Pillar { pillar: true; x: number; y: number; r: number; brazier: boolean }
+interface Pillar { pillar: true; x: number; y: number; r: number; kind: 'o' | 'b' | 's' | 'c' }
 interface Geometry {
   /** Tamanho da sala em unidades de mundo. */
   worldW: number;
@@ -48,6 +54,7 @@ interface Geometry {
   pillars: Pillar[];
   bounds: { x0: number; x1: number; y0: number; y1: number };
   windows: Face[];
+  plaques: Face[];
   door: Face | null;
 }
 
@@ -101,7 +108,10 @@ export function createRenderer(ctx: CanvasRenderingContext2D, makeCanvas: MakeCa
     for (const b of [w.player as { x: number; y: number; r: number }, ...w.enemies]) shadow(b.x, b.y, b.r);
     for (const e of w.enemies) for (const d of dangers(e)) drawDanger(d, e, w.time);
     if (w.player.swing) drawSlash(w.player);
+    if (w.player.spin > 0) drawSkillRing(w.player);
     drawBackWalls(geo, w);
+    screen();
+    for (const l of w.loot) drawLoot(l, w.time);
 
     order.length = 0;
     for (const p of geo.pillars) order.push(p);
@@ -196,8 +206,8 @@ export function createRenderer(ctx: CanvasRenderingContext2D, makeCanvas: MakeCa
     for (let ty = 0; ty < room.rows; ty++) {
       for (let tx = 0; tx < room.cols; tx++) {
         const ch = room.tiles[ty][tx];
-        if (ch === 'o' || ch === 'b') {
-          pillars.push({ pillar: true, x: (tx + 0.5) * T, y: (ty + 0.5) * T, r: 0, brazier: ch === 'b' });
+        if (ch === 'o' || ch === 'b' || ch === 's' || ch === 'c') {
+          pillars.push({ pillar: true, x: (tx + 0.5) * T, y: (ty + 0.5) * T, r: 0, kind: ch });
           continue;
         }
         if (ch !== '#') continue;
@@ -217,10 +227,11 @@ export function createRenderer(ctx: CanvasRenderingContext2D, makeCanvas: MakeCa
     const northRow = back.filter((f) => f.side === 'S');
     const westCol = back.filter((f) => f.side === 'E');
     const windows = northRow.filter((f) => [4, 9, 19, 24].includes(f.tx));
-    for (const f of westCol) if (f.ty === 6 || f.ty === 11) windows.push(f);
+    for (const f of westCol) if (f.ty === 5 || f.ty === 12) windows.push(f);
+    const plaques = westCol.filter((f) => f.ty === 8);
     const door = northRow.find((f) => f.tx === mid) ?? null;
     return {
-      worldW: room.cols * T, worldH: room.rows * T, spans, back, backTops, front, pillars, windows, door,
+      worldW: room.cols * T, worldH: room.rows * T, spans, back, backTops, front, pillars, windows, plaques, door,
       bounds: { x0: x0 - 40, x1: x1 + 40, y0: y0 - 20, y1: y1 + 40 },
     };
   }
@@ -284,7 +295,11 @@ export function createRenderer(ctx: CanvasRenderingContext2D, makeCanvas: MakeCa
     // Decoração nas faces: vitrais e a porta (aberta quando a sala foi limpa).
     for (const f of g.windows) {
       face(f, WALL_H);
-      drawPropOnFace(PROP.window, T, WALL_H - 10, 86); // centrado na junção com o tile seguinte: vitral de 2 tiles
+      drawPropOnFace(PROP.window, T, WALL_H - 10, 92); // centrado na junção com o tile seguinte: vitral de 2 tiles
+    }
+    for (const f of g.plaques) {
+      face(f, WALL_H);
+      drawPropOnFace(PROP.plaque, T, WALL_H - 22, 58);
     }
     if (g.door) {
       face(g.door, WALL_H);
@@ -331,15 +346,19 @@ export function createRenderer(ctx: CanvasRenderingContext2D, makeCanvas: MakeCa
     }
   }
 
+  /** Coluna, braseiro, estátua ou candelabro: sprite isométrico da folha de props, base no tile. */
   function drawPillar(p: Pillar, time: number): void {
     const sx = isoX(p.x, p.y), sy = isoY(p.x, p.y);
-    if (p.brazier) {
-      drawBrazier(sx, sy, time);
-      return;
-    }
     const img = images.props, def = SHEETS.props;
     if (img && def) {
-      ctx.drawImage(img, PROP.column * def.frameW, 0, def.frameW, def.frameH, sx - 58, sy - 116 + 18, 116, 116);
+      const size = PROP_SIZE[p.kind];
+      ctx.drawImage(img, PROP_FRAME[p.kind] * def.frameW, 0, def.frameW, def.frameH, sx - size / 2, sy + 14 - size, size, size);
+      if (p.kind === 'b') drawFlame(sx, sy - size * 0.55, time, 0.8);
+      if (p.kind === 'c') drawFlame(sx, sy - size * 0.78, time, 0.35);
+      return;
+    }
+    if (p.kind === 'b' || p.kind === 'c') {
+      drawBrazier(sx, sy, time);
       return;
     }
     const tx = p.x / T - 0.5, ty = p.y / T - 0.5;
@@ -351,7 +370,21 @@ export function createRenderer(ctx: CanvasRenderingContext2D, makeCanvas: MakeCa
     drawTop(tx, ty, PILLAR_H, THEME.stone);
   }
 
-  /** Braseiro provisório (até a folha de props isométricos): tripé de ferro com chama tremulante. */
+  /** Chama tremulante aditiva sobre o fogo pintado do sprite (dá vida à imagem estática). */
+  function drawFlame(x: number, y: number, time: number, size: number): void {
+    const f = settings.reduceMotion ? 1 : 1 + Math.sin(time * 13 + x) * 0.1 + Math.sin(time * 7.3 + y) * 0.07;
+    ctx.globalCompositeOperation = 'lighter';
+    const r = 30 * size * f;
+    const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
+    grad.addColorStop(0, 'rgba(255,200,110,0.55)');
+    grad.addColorStop(0.5, 'rgba(255,120,40,0.25)');
+    grad.addColorStop(1, 'rgba(255,90,30,0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(x - r, y - r, r * 2, r * 2);
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  /** Braseiro provisório (sem a folha de props): tripé de ferro com chama tremulante. */
   function drawBrazier(sx: number, sy: number, time: number): void {
     ctx.strokeStyle = '#2a2622';
     ctx.lineWidth = 3;
@@ -426,7 +459,12 @@ export function createRenderer(ctx: CanvasRenderingContext2D, makeCanvas: MakeCa
       lg.fillRect(cx - rr, cy - rr, rr * 2, rr * 2);
     };
     hole(w.player.x, w.player.y, 30, 190, 0.85);
-    for (const p of g.pillars) if (p.brazier) hole(p.x, p.y, 40, 260 * (1 + flick), 1);
+    for (const p of g.pillars) {
+      if (p.kind === 'b') hole(p.x, p.y, 40, 260 * (1 + flick), 1);
+      else if (p.kind === 'c') hole(p.x, p.y, 60, 150 * (1 + flick), 0.85);
+    }
+    if (w.player.spin > 0) hole(w.player.x, w.player.y, 20, 220, 1);
+    for (const l of w.loot) hole(l.x, l.y, 10, 60 + 20 * l.item.rarity, 0.7);
     for (const q of w.projectiles) hole(q.x, q.y, 26, 70, 0.7);
     for (const e of w.enemies) if (CONFIG.enemies[e.kind].boss) hole(e.x, e.y, 80, 160, 0.6);
     if (g.door && w.phase === 'exit') hole((g.door.tx + 1) * T, (g.door.ty + 1) * T, 40, 150, 0.9);
@@ -436,8 +474,8 @@ export function createRenderer(ctx: CanvasRenderingContext2D, makeCanvas: MakeCa
     ctx.globalCompositeOperation = 'lighter';
     screen();
     for (const p of g.pillars) {
-      if (!p.brazier) continue;
-      const x = isoX(p.x, p.y), y = isoY(p.x, p.y, 40), r = 130 * (1 + flick);
+      if (p.kind !== 'b' && p.kind !== 'c') continue;
+      const x = isoX(p.x, p.y), y = isoY(p.x, p.y, 40), r = (p.kind === 'b' ? 130 : 80) * (1 + flick);
       const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
       grad.addColorStop(0, 'rgba(255,150,60,0.22)');
       grad.addColorStop(1, 'rgba(255,150,60,0)');
@@ -526,24 +564,33 @@ export function createRenderer(ctx: CanvasRenderingContext2D, makeCanvas: MakeCa
     ctx.globalAlpha = 1;
   }
 
+  /** Quadro da folha de cada inimigo conforme o estado (e o tipo de ataque, no chefe). */
+  function enemyFrame(e: Enemy): number {
+    const atk = currentAttack(e).kind;
+    switch (e.kind) {
+      case 'brute': return e.state === 'windup' ? 1 : e.state === 'act' ? 2 : e.state === 'stun' ? 3 : 0;
+      case 'angel': return e.state === 'windup' ? (atk === 'volley' ? 3 : 1) : e.state === 'act' ? (atk === 'volley' ? 3 : 2) : 0;
+      default: return e.state === 'idle' ? 0 : e.state === 'windup' ? 2 : e.state === 'act' || e.state === 'recover' ? 3 : 1;
+    }
+  }
+
   function drawEnemy(e: Enemy, w: World): void {
     const { u } = worldAngleToScreen(e.face);
-    const flip = u < 0, t = w.time * 9 + e.id;
-    let frame = 1, lift = 0, tilt = 0, squash = 1, x = e.x, glow = 0;
+    const flip = u < 0, t = w.time * 9 + e.id, boss = CONFIG.enemies[e.kind].boss;
+    const frame = enemyFrame(e);
+    let lift = boss ? 10 + Math.sin(w.time * 2) * 5 : 0, tilt = 0, squash = 1, x = e.x, glow = 0;
     switch (e.state) {
-      case 'idle': frame = 0; squash = 1 + Math.sin(w.time * 2 + e.id) * 0.015; break;
-      case 'chase': lift = Math.abs(Math.sin(t)) * 2.5; tilt = Math.sin(t) * 0.05; break;
+      case 'idle': squash = 1 + Math.sin(w.time * 2 + e.id) * 0.015; break;
+      case 'chase': if (!boss) { lift = Math.abs(Math.sin(t)) * 2.5; tilt = Math.sin(t) * 0.05; } break;
       case 'windup': {
         const k = Math.min(1, e.t / windupTime(e));
-        frame = 2;
         if (!settings.reduceMotion) x += Math.sin(w.time * 70) * k * 1.5;
         glow = 0.2 + 0.4 * k;
         break;
       }
-      case 'act': frame = 3; break;
-      case 'recover': frame = 3; squash = 0.95; break;
+      case 'recover': squash = 0.95; break;
       case 'stagger': tilt = flip ? 0.2 : -0.2; break;
-      case 'stun': frame = 1; tilt = Math.sin(w.time * 6) * 0.15; break;
+      case 'stun': tilt = Math.sin(w.time * 6) * 0.08; break;
     }
     const flash = e.flash > 0 ? e.flash / 0.12 : 0;
     const drawn = drawSprite(e.kind, frame, x, e.y, flip, lift, tilt, squash, flash > 0 ? THEME.ivory : THEME.blood, flash > 0 ? flash : glow);
@@ -693,6 +740,57 @@ export function createRenderer(ctx: CanvasRenderingContext2D, makeCanvas: MakeCa
     ctx.beginPath();
     ctx.arc(p.x, p.y, range - 3, start, end);
     ctx.stroke();
+    ctx.restore();
+  }
+
+  /** Ira Flamejante: anel de fogo que se expande no chão até o raio de dano. */
+  function drawSkillRing(p: Player): void {
+    const sk = CONFIG.player.skill, k = 1 - p.spin / sk.duration, r = sk.radius * (0.35 + 0.65 * k);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = 1 - k * 0.6;
+    const grad = ctx.createRadialGradient(p.x, p.y, r * 0.55, p.x, p.y, r + 10);
+    grad.addColorStop(0, 'rgba(255,120,40,0)');
+    grad.addColorStop(0.7, 'rgba(255,140,50,0.75)');
+    grad.addColorStop(0.9, 'rgba(255,230,160,0.9)');
+    grad.addColorStop(1, 'rgba(255,90,30,0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, r + 10, 0, TAU);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  /** Equipamento no chão: feixe e brilho na cor da raridade (o texto da raridade aparece ao pegar). */
+  function drawLoot(l: { x: number; y: number; t: number; item: { rarity: number; slot: string } }, time: number): void {
+    const x = isoX(l.x, l.y), y = isoY(l.x, l.y), color = RARITY[l.item.rarity as 0].color;
+    const bob = Math.sin(time * 3 + l.x) * 3;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    const beam = ctx.createLinearGradient(0, y, 0, y - 90);
+    beam.addColorStop(0, rgba(color, 0.55));
+    beam.addColorStop(1, rgba(color, 0));
+    ctx.fillStyle = beam;
+    ctx.fillRect(x - 6, y - 90, 12, 90);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = 'rgba(5,5,8,0.5)';
+    ctx.beginPath();
+    ctx.ellipse(x, y, 12, 6, 0, 0, TAU);
+    ctx.fill();
+    const img = images.icons, def = SHEETS.icons;
+    const icon = l.item.slot === 'weapon' ? ICON.weapon : l.item.slot === 'armor' ? ICON.armor : ICON.relic;
+    if (img && def) {
+      ctx.drawImage(img, icon * def.frameW, 0, def.frameW, def.frameH, x - 16, y - 40 + bob, 32, 32);
+    } else {
+      ctx.fillStyle = color;
+      ctx.strokeStyle = THEME.ivory;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(x, y - 34 + bob); ctx.lineTo(x + 9, y - 22 + bob); ctx.lineTo(x, y - 10 + bob); ctx.lineTo(x - 9, y - 22 + bob);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
     ctx.restore();
   }
 

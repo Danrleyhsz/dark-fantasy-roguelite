@@ -14,17 +14,24 @@ export interface Room {
   enemySpawns: Point[];
   /** Centros dos braseiros (fontes de luz e brasas). */
   braziers: Point[];
+  /** Centros dos candelabros (luz menor). */
+  candles: Point[];
 }
 
 const T = CONFIG.tile;
 const EPS = 1e-6;
 
-/** Legenda: '#' parede, 'o' pilar, 'b' braseiro, '.' piso, 'P' início do jogador, 'E' ponto de inimigo. */
+const SOLID = '#obsc';
+
+/**
+ * Legenda: '#' parede, 'o' pilar, 'b' braseiro, 's' estátua, 'c' candelabro, '.' piso,
+ * 'P' início do jogador, 'E' ponto de inimigo.
+ */
 export function parseRoom(map: string[]): Room {
   const rows = map.length, cols = map[0].length;
   const solid = new Uint8Array(cols * rows);
   const tiles: string[] = [];
-  const enemySpawns: Point[] = [], braziers: Point[] = [];
+  const enemySpawns: Point[] = [], braziers: Point[] = [], candles: Point[] = [];
   let playerSpawn: Point | null = null;
   for (let ty = 0; ty < rows; ty++) {
     const line = map[ty];
@@ -36,15 +43,16 @@ export function parseRoom(map: string[]): Room {
       if (ch === 'P') playerSpawn = center;
       else if (ch === 'E') enemySpawns.push(center);
       else if (ch === 'b') braziers.push(center);
-      else if (ch !== '#' && ch !== 'o' && ch !== '.') throw new Error(`Tile desconhecido '${ch}' na sala`);
-      const blocks = ch === '#' || ch === 'o' || ch === 'b';
+      else if (ch === 'c') candles.push(center);
+      else if (!SOLID.includes(ch) && ch !== '.') throw new Error(`Tile desconhecido '${ch}' na sala`);
+      const blocks = SOLID.includes(ch);
       solid[ty * cols + tx] = blocks ? 1 : 0;
       row += blocks ? ch : '.';
     }
     tiles.push(row);
   }
   if (!playerSpawn) throw new Error('Sala sem início do jogador (P)');
-  return { cols, rows, tiles, solid, playerSpawn, enemySpawns, braziers };
+  return { cols, rows, tiles, solid, playerSpawn, enemySpawns, braziers, candles };
 }
 
 export function solidAt(room: Room, tx: number, ty: number): boolean {

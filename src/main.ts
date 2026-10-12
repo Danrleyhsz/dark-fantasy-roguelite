@@ -1,7 +1,8 @@
+import { createSfx } from './audio/sfx.ts';
 import { CONFIG } from './game/config.ts';
-import { buyMeta, createGame, pickReward, quitToMenu, setPaused, setReduceMotion, startRun, updateGame, type Screen } from './game/game.ts';
+import { buyMeta, createGame, pickReward, quitToMenu, setPaused, setReduceMotion, setVolume, startRun, updateGame, type Screen } from './game/game.ts';
 import { FIRST_ROOM } from './game/rooms.ts';
-import { createWorld } from './game/world.ts';
+import { createWorld, type World } from './game/world.ts';
 import { createInput } from './input/input.ts';
 import type { StorageLike } from './persistence/save.ts';
 import { loadImages } from './rendering/assets.ts';
@@ -32,6 +33,10 @@ try {
 }
 
 const game = createGame(storage);
+const sfx = createSfx(game.save.settings.volume);
+// O navegador só libera áudio depois de um gesto do usuário.
+for (const ev of ['pointerdown', 'keydown'] as const) window.addEventListener(ev, () => sfx.unlock(), { passive: true });
+
 const backdrop = createWorld(FIRST_ROOM, 1); // cena parada atrás do menu
 const input = createInput(canvas, (clientX, clientY) => {
   const r = canvas.getBoundingClientRect();
@@ -55,6 +60,11 @@ const ui = createUI(game, {
     if (buyMeta(game, id)) ui.show('menu');
   },
   reduceMotion: (on) => setReduceMotion(game, on),
+  volume: (v) => {
+    setVolume(game, v);
+    sfx.setVolume(v);
+    sfx.play('pickup');
+  },
 });
 
 function resize(): void {
@@ -73,6 +83,37 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden) setPaused(game, true);
 });
 
+/** Sons a partir das mudanças de estado entre quadros: o mundo não precisa saber de áudio. */
+let prev = { world: null as World | null, serial: 0, kills: 0, hp: 0, dodge: 0, skillCd: 0, loot: -1, level: 0, phase: '', shots: 0, windups: 0, floaters: 0 };
+function sounds(w: World | null): void {
+  if (!w) {
+    prev.world = null;
+    return;
+  }
+  const p = w.player;
+  const snap = {
+    world: w, serial: w.serial, kills: w.stats.kills, hp: p.hp, dodge: p.dodgeSerial, skillCd: p.skillCd,
+    loot: w.lastLoot?.time ?? -1, level: p.level, phase: w.phase,
+    shots: w.projectiles.filter((q) => q.hostile).length,
+    windups: w.enemies.filter((e) => e.state === 'windup').length,
+    floaters: w.floaters.filter((f) => f.kind === 'dmg' || f.kind === 'crit').length,
+  };
+  if (prev.world === w) {
+    if (snap.serial > prev.serial) sfx.play('swing');
+    if (snap.kills > prev.kills) sfx.play('kill');
+    else if (snap.floaters > prev.floaters) sfx.play(w.floaters.some((f) => f.kind === 'crit' && f.t < 0.05) ? 'crit' : 'hit');
+    if (snap.hp < prev.hp) sfx.play('hurt');
+    if (snap.dodge > prev.dodge) sfx.play('dodge');
+    if (snap.skillCd > prev.skillCd + 0.5) sfx.play('skill');
+    if (snap.loot !== prev.loot) sfx.play('pickup');
+    if (snap.level > prev.level) sfx.play('levelup');
+    if (snap.phase === 'exit' && prev.phase !== 'exit') sfx.play('door');
+    if (snap.shots > prev.shots) sfx.play('shot');
+    if (snap.windups > prev.windups) sfx.play('windup');
+  }
+  prev = snap;
+}
+
 let last = performance.now(), acc = 0, shown: Screen | null = null;
 function frame(now: number): void {
   const dt = Math.min((now - last) / 1000, CONFIG.maxFrame);
@@ -86,18 +127,20 @@ function frame(now: number): void {
     acc += dt;
     while (acc >= CONFIG.step && game.screen === 'playing') {
       updateGame(game, input.state, CONFIG.step);
-      input.state.attack = input.state.dodge = false;
+      input.state.attack = input.state.dodge = input.state.skill = false;
       acc -= CONFIG.step;
     }
   } else {
     acc = 0;
-    input.state.attack = input.state.dodge = false;
+    input.state.attack = input.state.dodge = input.state.skill = false;
   }
   if (game.screen !== shown) {
+    if (game.screen === 'victory' || game.screen === 'defeat') sfx.play(game.screen);
     shown = game.screen;
     if (shown !== 'playing') input.reset();
     ui.show(shown);
   }
+  sounds(game.screen === 'playing' ? game.world : null);
   renderer.draw(game.world ?? backdrop);
   ui.hud(game.world);
   requestAnimationFrame(frame);

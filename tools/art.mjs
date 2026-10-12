@@ -14,10 +14,14 @@ import { dirname } from 'node:path';
 const JOBS = [
   // Isométrico: linha de cima de frente (sudeste), linha de baixo de costas (nordeste).
   { id: 'hero', src: 'art/raw/iso/hero-sheet.jpg', out: 'characters/hero.png', grid: [4, 2], gridLines: true, frames: ['idleF', 'runF', 'slashF', 'dodgeF', 'idleB', 'runB', 'slashB', 'dodgeB'], fit: 'height', size: 224 },
-  { id: 'player', src: 'art/raw/player-knight-sheet.jpg', out: 'characters/player.png', grid: [2, 2], frames: ['idle', 'run', 'slash', 'dodge'], fit: 'height', size: 192 },
-  { id: 'penitent', src: 'art/raw/penitent-sheet.jpg', out: 'enemies/penitent.png', grid: [2, 2], frames: ['pray', 'walk', 'windup', 'attack'], fit: 'height', size: 192 },
-  // Props altos: no modo 'box' todos ocupam a altura inteira da célula (base alinhada embaixo).
-  { id: 'props', src: 'art/raw/props-architecture.jpg', out: 'environment/props.png', grid: [2, 2], frames: ['window', 'doorClosed', 'doorOpen', 'column'], fit: 'box', size: 192 },
+  // Inimigos isométricos: uma linha por inimigo na mesma imagem (todos de frente, sudeste).
+  { id: 'penitent', src: 'art/raw/iso/enemies-a.jpg', out: 'enemies/penitent.png', grid: [4, 2], gridLines: true, cells: [0, 1, 2, 3], frames: ['pray', 'walk', 'windup', 'attack'], fit: 'height', size: 208 },
+  { id: 'acolyte', src: 'art/raw/iso/enemies-a.jpg', out: 'enemies/acolyte.png', grid: [4, 2], gridLines: true, cells: [4, 5, 6, 7], frames: ['idle', 'walk', 'windup', 'throw'], fit: 'height', size: 208 },
+  { id: 'brute', src: 'art/raw/iso/enemies-b.jpg', out: 'enemies/brute.png', grid: [4, 2], gridLines: true, cells: [0, 1, 2, 3], frames: ['idle', 'windup', 'charge', 'stun'], fit: 'height', size: 240 },
+  { id: 'angel', src: 'art/raw/iso/enemies-b.jpg', out: 'bosses/angel.png', grid: [4, 2], gridLines: true, cells: [4, 5, 6, 7], frames: ['idle', 'windup', 'thrust', 'wings'], fit: 'height', size: 320 },
+  // Props: linha de cima frontal (aplicada nas faces das paredes), de baixo isométrica.
+  // No modo 'box' cada prop cabe numa célula quadrada; os altos ocupam a altura inteira (base embaixo).
+  { id: 'props', src: 'art/raw/iso/props-a.jpg', out: 'environment/props.png', grid: [4, 2], gridLines: true, frames: ['window', 'doorClosed', 'doorOpen', 'plaque', 'column', 'brazier', 'statue', 'candelabra'], fit: 'box', size: 224 },
   // Texturas: só redimensionadas (cobrindo o quadro) e comprimidas.
   // Ladrilháveis: 512 px = FLOOR_TILE (256) e 384 px = WALL_TILE (192) px lógicos no render.
   // linear [a, b] = a*v + b: comprime o contraste e clareia as lajes escuras (leitura dos personagens).
@@ -54,7 +58,9 @@ async function processSheet(job) {
 
   const frames = [];
   for (let i = 0; i < job.frames.length; i++) {
-    const cx = i % gx, cy = Math.floor(i / gx);
+    // job.cells escolhe quais células da grade usar (várias folhas na mesma imagem).
+    const cell = job.cells ? job.cells[i] : i;
+    const cx = cell % gx, cy = Math.floor(cell / gx);
     const inCell = comps.filter((c) => c.mx >= cx * cellW && c.mx < (cx + 1) * cellW && c.my >= cy * cellH && c.my < (cy + 1) * cellH);
     if (!inCell.length) throw new Error(`${job.id}: célula ${i} (${job.frames[i]}) vazia`);
     frames.push(pickFrame(inCell, labels, data, w, cellW * 0.08));

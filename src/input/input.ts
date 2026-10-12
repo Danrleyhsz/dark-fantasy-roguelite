@@ -9,6 +9,7 @@ const CODES = {
   right: ['KeyD', 'ArrowRight'],
   attack: ['KeyJ', 'KeyZ'],
   dodge: ['Space', 'ShiftLeft', 'ShiftRight', 'KeyK', 'KeyX'],
+  skill: ['KeyQ', 'KeyE', 'KeyL'],
   pause: ['Escape', 'KeyP'],
 };
 const GAME_KEYS = new Set(Object.values(CODES).flat());
@@ -27,7 +28,7 @@ export interface Input {
 
 export function createInput(canvas: HTMLCanvasElement, toWorld: (clientX: number, clientY: number) => Point): Input {
   const held = new Set<string>();
-  const state: InputState = { moveX: 0, moveY: 0, attack: false, aimAt: null, dodge: false };
+  const state: InputState = { moveX: 0, moveY: 0, attack: false, aimAt: null, dodge: false, skill: false };
   const stick = document.getElementById('stick')!, knob = document.getElementById('knob')!;
   let stickId: number | null = null, ox = 0, oy = 0, sx = 0, sy = 0;
   const input: Input = { state, pause: false, poll, reset };
@@ -46,6 +47,7 @@ export function createInput(canvas: HTMLCanvasElement, toWorld: (clientX: number
     held.add(e.code);
     if (!e.repeat && CODES.attack.includes(e.code)) attack(null);
     if (!e.repeat && CODES.dodge.includes(e.code)) state.dodge = true;
+    if (!e.repeat && CODES.skill.includes(e.code)) state.skill = true;
   });
   window.addEventListener('keyup', (e) => held.delete(e.code));
   // Teclas soltas fora da janela nunca geram keyup: limpa ao perder o foco.
@@ -94,6 +96,10 @@ export function createInput(canvas: HTMLCanvasElement, toWorld: (clientX: number
     e.preventDefault();
     state.dodge = true;
   });
+  document.getElementById('t-skill')!.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    state.skill = true;
+  });
 
   function attack(aimAt: Point | null): void {
     state.attack = true;
@@ -123,7 +129,7 @@ export function createInput(canvas: HTMLCanvasElement, toWorld: (clientX: number
     held.clear();
     releaseStick();
     state.moveX = state.moveY = 0;
-    state.attack = state.dodge = false;
+    state.attack = state.dodge = state.skill = false;
     state.aimAt = null;
   }
 

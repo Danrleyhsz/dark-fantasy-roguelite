@@ -1,3 +1,4 @@
+import { CONFIG } from '../game/config.ts';
 import { META, type MetaId, type MetaLevels } from '../game/upgrades.ts';
 
 /** Só o necessário (TECHNICAL_DESIGN): progressão permanente, recordes e configurações. */
@@ -5,8 +6,10 @@ export interface SaveData {
   version: 1;
   ashes: number;
   meta: MetaLevels;
+  /** Nível e experiência do herói: a progressão RPG persiste entre incursões. */
+  hero: { level: number; xp: number };
   best: { runs: number; wins: number; depth: number };
-  settings: { reduceMotion: boolean };
+  settings: { reduceMotion: boolean; volume: number };
 }
 
 export type StorageLike = Pick<Storage, 'getItem' | 'setItem'>;
@@ -18,8 +21,9 @@ export function defaultSave(): SaveData {
     version: 1,
     ashes: 0,
     meta: { vigor: 0, edge: 0, breath: 0 },
+    hero: { level: 1, xp: 0 },
     best: { runs: 0, wins: 0, depth: 0 },
-    settings: { reduceMotion: false },
+    settings: { reduceMotion: false, volume: 0.6 },
   };
 }
 
@@ -34,13 +38,20 @@ export function loadSave(storage: StorageLike | null): SaveData {
     return save;
   }
   if (!raw || typeof raw !== 'object') return save;
-  const r = raw as { ashes?: unknown; meta?: Record<string, unknown>; best?: Record<string, unknown>; settings?: Record<string, unknown> };
+  const r = raw as {
+    ashes?: unknown; meta?: Record<string, unknown>; hero?: Record<string, unknown>;
+    best?: Record<string, unknown>; settings?: Record<string, unknown>;
+  };
   save.ashes = int(r.ashes, 1_000_000);
   for (const id of Object.keys(META) as MetaId[]) save.meta[id] = int(r.meta?.[id], META[id].costs.length);
+  save.hero.level = Math.max(1, int(r.hero?.level, CONFIG.levels.max));
+  save.hero.xp = int(r.hero?.xp, 1_000_000);
   save.best.runs = int(r.best?.runs, 1_000_000);
   save.best.wins = Math.min(int(r.best?.wins, 1_000_000), save.best.runs);
   save.best.depth = int(r.best?.depth, 100);
   save.settings.reduceMotion = r.settings?.reduceMotion === true;
+  const vol = r.settings?.volume;
+  save.settings.volume = typeof vol === 'number' && vol >= 0 && vol <= 1 ? vol : save.settings.volume;
   return save;
 }
 

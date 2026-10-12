@@ -1,13 +1,17 @@
 import { CONFIG, type EnemyKind } from './config.ts';
-import { burst, damageEnemy, hurtPlayer, spawnProjectile } from './combat.ts';
+import { burst, damageEnemy, floater, heal, hurtPlayer, spawnProjectile } from './combat.ts';
 import { updateEnemy } from './enemies.ts';
+import { EMPTY_GEAR, deriveStats, xpToNext, type Gear, type PlayerStats } from './hero.ts';
+import { RARITY, itemPower, rollItem, type Item } from './items.ts';
 import { inSector, mulberry32 } from './math.ts';
 import { computeFlowField, moveAndCollide, solidAtPoint, type Point, type Room } from './room.ts';
 import { BOSS_ROOM, ROOM_POOL, START_ROOM } from './rooms.ts';
-import { META, NO_META, UPGRADES, type MetaLevels, type UpgradeId } from './upgrades.ts';
+import { NO_META, UPGRADES, type MetaLevels, type UpgradeId } from './upgrades.ts';
+
+export type { PlayerStats } from './hero.ts';
 
 export interface InputState {
-  /** Vetor de movimento com módulo ≤ 1. */
+  /** Vetor de movimento (no mundo) com módulo ≤ 1. */
   moveX: number;
   moveY: number;
   /** Ataque pressionado desde o último passo. */
@@ -16,12 +20,11 @@ export interface InputState {
   aimAt: Point | null;
   /** Esquiva pressionada desde o último passo. */
   dodge: boolean;
+  /** Habilidade pressionada desde o último passo. */
+  skill?: boolean;
 }
 
 export interface Swing { t: number; dir: number; serial: number }
-
-/** Atributos do jogador que as bênçãos e o Relicário alteram. */
-export interface PlayerStats { damage: number; range: number; arc: number; cooldown: number; dodgeCooldown: number }
 
 export interface Player {
   x: number; y: number; r: number;
@@ -29,7 +32,13 @@ export interface Player {
   hp: number; maxHp: number;
   face: number;
   moving: boolean;
+  /** Derivado de nível, equipamento, bênçãos e Relicário (hero.ts). */
   stats: PlayerStats;
+  level: number;
+  xp: number;
+  gear: Gear;
+  meta: MetaLevels;
+  fe: number;
   swing: Swing | null;
   cooldown: number;
   buffer: number;
@@ -42,6 +51,10 @@ export interface Player {
   dodgeDir: number;
   dodgeBuffer: number;
   dodgeSerial: number;
+  skillCd: number;
+  skillBuffer: number;
+  /** Tempo restante do efeito visual da Ira Flamejante. */
+  spin: number;
 }
 
 export type EnemyState = 'idle' | 'chase' | 'windup' | 'act' | 'recover' | 'stagger' | 'stun';
@@ -87,8 +100,11 @@ export interface Floater { x: number; y: number; z: number; text: string; t: num
 export const FLOATER_TIME = 0.9;
 /** Inimigo derrotado, mantido só para a animação de morte. */
 export interface Corpse { kind: EnemyKind; x: number; y: number; r: number; face: number; t: number }
-
 export const CORPSE_TIME = 0.6;
+/** Equipamento caído no chão. */
+export interface Loot { x: number; y: number; item: Item; t: number }
+/** Último item pego (a interface mostra um aviso). */
+export interface LootNotice { item: Item; equipped: boolean; ashes: number; time: number }
 
 /** fight: há inimigos; reward: sala limpa, recompensa sendo oferecida; exit: porta aberta. */
 export type RoomPhase = 'fight' | 'reward' | 'exit';
@@ -109,6 +125,8 @@ export interface World {
   particles: Particle[];
   corpses: Corpse[];
   floaters: Floater[];
+  loot: Loot[];
+  lastLoot: LootNotice | null;
   time: number;
   hitstop: number;
   shake: number;
@@ -121,48 +139,52 @@ export interface World {
   flowDist: Int16Array;
   flowQueue: Int32Array;
   flowTile: number;
-  stats: { kills: number; damageTaken: number; roomsCleared: number };
+  stats: { kills: number; damageTaken: number; roomsCleared: number; xpGained: number; levelsGained: number };
+  /** Cinzas de equipamentos convertidos nesta incursão. */
+  runAshes: number;
+  /** Abates já recompensados (conta para o Cálice de Sangue). */
+  rewarded: number;
 }
 
 const P = CONFIG.player;
 
-function createPlayer(at: Point, meta: MetaLevels): Player {
-  const maxHp = P.maxHp + meta.vigor * META.vigor.perLevel;
+export interface Hero { level: number; xp: number }
+
+function createPlayer(at: Point, meta: MetaLevels, hero: Hero): Player {
+  const stats = deriveStats(hero.level, EMPTY_GEAR, [], meta);
   return {
-    x: at.x, y: at.y, r: P.radius, vx: 0, vy: 0, hp: maxHp, maxHp, face: -Math.PI / 2, moving: false,
-    stats: {
-      damage: P.attack.damage, range: P.attack.range, arc: P.attack.arc,
-      cooldown: P.attack.cooldown * (1 - meta.edge * META.edge.perLevel),
-      dodgeCooldown: P.dodge.cooldown * (1 - meta.breath * META.breath.perLevel),
-    },
+    x: at.x, y: at.y, r: P.radius, vx: 0, vy: 0, hp: stats.maxHp, maxHp: stats.maxHp, face: -Math.PI / 2, moving: false,
+    stats, level: hero.level, xp: hero.xp, gear: { ...EMPTY_GEAR }, meta, fe: stats.maxFe,
     swing: null, cooldown: 0, buffer: 0, bufferAim: null, invuln: 0, flash: 0,
-    dodge: 0, dodgeCd: 0, dodgeDir: 0, dodgeBuffer: 0, dodgeSerial: 0,
+    dodge: 0, dodgeCd: 0, dodgeDir: 0, dodgeBuffer: 0, dodgeSerial: 0, skillCd: 0, skillBuffer: 0, spin: 0,
   };
 }
 
-function emptyWorld(room: Room, seed: number, totalRooms: number, meta: MetaLevels): World {
+function emptyWorld(room: Room, seed: number, totalRooms: number, meta: MetaLevels, hero: Hero): World {
   const cells = room.cols * room.rows;
   return {
     room, depth: 0, totalRooms, phase: 'fight', phaseTimer: 0, offer: null, upgrades: [],
-    player: createPlayer(room.playerSpawn, meta),
-    enemies: [], projectiles: [], particles: [], corpses: [], floaters: [],
+    player: createPlayer(room.playerSpawn, meta, hero),
+    enemies: [], projectiles: [], particles: [], corpses: [], floaters: [], loot: [], lastLoot: null,
     time: 0, hitstop: 0, shake: 0, outcome: null, outcomeTimer: 0,
     rng: mulberry32(seed), serial: 0, nextId: 1,
     flowDist: new Int16Array(cells), flowQueue: new Int32Array(cells), flowTile: -1,
-    stats: { kills: 0, damageTaken: 0, roomsCleared: 0 },
+    stats: { kills: 0, damageTaken: 0, roomsCleared: 0, xpGained: 0, levelsGained: 0 },
+    runAshes: 0,
+    rewarded: 0,
   };
 }
 
 /** Sala avulsa (vence ao limpar): testes e fundo do menu. Inimigos nos pontos 'E', na ordem. */
 export function createWorld(room: Room, seed: number, kinds: EnemyKind[] = ['penitent']): World {
-  const w = emptyWorld(room, seed, 1, NO_META);
+  const w = emptyWorld(room, seed, 1, NO_META, { level: 1, xp: 0 });
   room.enemySpawns.forEach((at, i) => spawnEnemy(w, kinds[i % kinds.length], at));
   return w;
 }
 
 /** Incursão completa: salas em sequência (CONFIG.run.encounters) terminando no chefe. */
-export function createRun(seed: number, meta: MetaLevels = NO_META): World {
-  const w = emptyWorld(START_ROOM, seed, CONFIG.run.encounters.length, meta);
+export function createRun(seed: number, meta: MetaLevels = NO_META, hero: Hero = { level: 1, xp: 0 }): World {
+  const w = emptyWorld(START_ROOM, seed, CONFIG.run.encounters.length, meta, hero);
   enterRoom(w, 0);
   return w;
 }
@@ -176,6 +198,34 @@ export function spawnEnemy(w: World, kind: EnemyKind, at: Point): Enemy {
   };
   w.enemies.push(e);
   return e;
+}
+
+/** Recalcula os atributos; ganhos de vida máxima também curam a diferença. */
+export function recomputeStats(w: World): void {
+  const p = w.player;
+  p.stats = deriveStats(p.level, p.gear, w.upgrades, p.meta);
+  const delta = p.stats.maxHp - p.maxHp;
+  p.maxHp = p.stats.maxHp;
+  if (delta > 0 && p.hp > 0) p.hp += delta;
+  p.hp = Math.min(p.hp, p.maxHp);
+  p.fe = Math.min(p.fe, p.stats.maxFe);
+}
+
+export function gainXp(w: World, amount: number): void {
+  const p = w.player;
+  w.stats.xpGained += amount;
+  if (p.level >= CONFIG.levels.max) return;
+  p.xp += amount;
+  while (p.level < CONFIG.levels.max && p.xp >= xpToNext(p.level)) {
+    p.xp -= xpToNext(p.level);
+    p.level++;
+    w.stats.levelsGained++;
+    recomputeStats(w);
+    if (p.hp > 0) heal(w, Math.round(p.maxHp * CONFIG.levels.heal));
+    floater(w, p.x, p.y, `Nível ${p.level}!`, 'info', 95);
+    burst(w, p.x, p.y, 0, 20, 'holy', Math.PI * 2);
+  }
+  if (p.level >= CONFIG.levels.max) p.xp = 0;
 }
 
 function enterRoom(w: World, depth: number): void {
@@ -192,6 +242,7 @@ function enterRoom(w: World, depth: number): void {
   w.particles = [];
   w.corpses = [];
   w.floaters = [];
+  w.loot = [];
   w.flowTile = -1;
   const p = w.player;
   p.x = room.playerSpawn.x;
@@ -218,12 +269,7 @@ function shuffle<T>(list: T[], rng: () => number): T[] {
 export function chooseUpgrade(w: World, id: UpgradeId): void {
   if (!w.offer?.includes(id)) return;
   w.upgrades.push(id);
-  const p = w.player, s = p.stats;
-  if (id === 'vigor') {
-    p.maxHp += 2;
-    p.hp = Math.min(p.maxHp, p.hp + 2);
-  } else if (id === 'reach') s.range *= 1.35;
-  else if (id === 'swift') s.cooldown *= 0.7;
+  recomputeStats(w);
   w.offer = null;
   w.phase = 'exit';
 }
@@ -231,6 +277,24 @@ export function chooseUpgrade(w: World, id: UpgradeId): void {
 function rollOffer(w: World): UpgradeId[] {
   const pool = (Object.keys(UPGRADES) as UpgradeId[]).filter((id) => UPGRADES[id].stack || !w.upgrades.includes(id));
   return shuffle(pool, w.rng).slice(0, 3);
+}
+
+/** Pega o equipamento: equipa se for melhor que o atual, senão converte em cinzas. */
+export function pickUp(w: World, loot: Loot): void {
+  const p = w.player, item = loot.item;
+  const better = itemPower(item) > itemPower(p.gear[item.slot]);
+  let ashes = 0;
+  if (better) {
+    p.gear[item.slot] = item;
+    recomputeStats(w);
+  } else {
+    ashes = RARITY[item.rarity].ashes;
+    w.runAshes += ashes;
+  }
+  w.lastLoot = { item, equipped: better, ashes, time: w.time };
+  floater(w, p.x, p.y, better ? item.name : `+${ashes} cinzas`, 'info', 90);
+  burst(w, loot.x, loot.y, -Math.PI / 2, 10, 'holy', Math.PI * 2);
+  w.loot.splice(w.loot.indexOf(loot), 1);
 }
 
 /** Jogador encostado na porta aberta da parede do fundo? */
@@ -247,6 +311,7 @@ export function stepWorld(w: World, input: InputState, dt: number): void {
     p.bufferAim = input.aimAt ? Math.atan2(input.aimAt.y - p.y, input.aimAt.x - p.x) : null;
   }
   if (input.dodge) p.dodgeBuffer = P.dodge.buffer;
+  if (input.skill) p.skillBuffer = P.dodge.buffer;
   if (w.hitstop > 0) {
     w.hitstop = Math.max(0, w.hitstop - dt);
     return;
@@ -262,8 +327,14 @@ export function stepWorld(w: World, input: InputState, dt: number): void {
   updateFlowField(w);
   for (const e of w.enemies) updateEnemy(w, e, dt);
   updateProjectiles(w, dt);
-  if (w.enemies.some((e) => e.hp <= 0)) w.enemies = w.enemies.filter((e) => e.hp > 0);
+  if (w.enemies.some((e) => e.hp <= 0)) {
+    for (const e of w.enemies) if (e.hp <= 0) rewardKill(w, e);
+    w.enemies = w.enemies.filter((e) => e.hp > 0);
+  }
   separateBodies(w);
+  for (const l of w.loot) l.t += dt;
+  const near = w.loot.find((l) => Math.hypot(l.x - p.x, l.y - p.y) <= CONFIG.pickupRadius + p.r);
+  if (near && p.hp > 0) pickUp(w, near);
 
   if (w.phase === 'fight' && w.enemies.length === 0 && !w.outcome) {
     w.stats.roomsCleared++;
@@ -291,6 +362,10 @@ function updatePlayer(w: World, input: InputState, dt: number): void {
   p.buffer = Math.max(0, p.buffer - dt);
   p.dodgeCd = Math.max(0, p.dodgeCd - dt);
   p.dodgeBuffer = Math.max(0, p.dodgeBuffer - dt);
+  p.skillCd = Math.max(0, p.skillCd - dt);
+  p.skillBuffer = Math.max(0, p.skillBuffer - dt);
+  p.spin = Math.max(0, p.spin - dt);
+  p.fe = Math.min(s.maxFe, p.fe + s.feRegen * dt);
   p.moving = input.moveX !== 0 || input.moveY !== 0;
 
   if (p.dodge > 0) {
@@ -301,7 +376,7 @@ function updatePlayer(w: World, input: InputState, dt: number): void {
       for (const e of w.enemies) {
         if (e.lastDodge !== p.dodgeSerial && Math.hypot(e.x - p.x, e.y - p.y) <= e.r + p.r + 6) {
           e.lastDodge = p.dodgeSerial;
-          damageEnemy(w, e, 1, p.dodgeDir, 120);
+          damageEnemy(w, e, CONFIG.shadowStepDamage, p.dodgeDir, 120);
         }
       }
     }
@@ -318,6 +393,7 @@ function updatePlayer(w: World, input: InputState, dt: number): void {
     burst(w, p.x, p.y + p.r, p.dodgeDir + Math.PI, 6, 'spark');
     return;
   }
+  if (p.skillBuffer > 0 && p.skillCd === 0 && p.fe >= P.skill.cost) castSkill(w);
 
   if (p.buffer > 0 && p.cooldown === 0 && !p.swing) {
     const dir = p.bufferAim ?? (p.moving ? Math.atan2(input.moveY, input.moveX) : p.face);
@@ -346,12 +422,42 @@ function updatePlayer(w: World, input: InputState, dt: number): void {
   }
 }
 
+/** Recompensa de cada abate: experiência, chance de equipamento e a bênção Cálice de Sangue. */
+function rewardKill(w: World, e: Enemy): void {
+  const def = CONFIG.enemies[e.kind];
+  w.rewarded++;
+  gainXp(w, def.xp);
+  if (w.rng() < def.drop) w.loot.push({ x: e.x, y: e.y, item: rollItem(w.rng, w.depth, def.dropMin), t: 0 });
+  if (w.upgrades.includes('lifesteal') && w.rewarded % CONFIG.lifestealEvery === 0) heal(w, CONFIG.lifestealHeal);
+}
+
+/** Ira Flamejante: giro de fogo que fere e empurra todos ao redor e queima projéteis inimigos. */
+function castSkill(w: World): void {
+  const p = w.player, sk = P.skill;
+  p.fe -= sk.cost;
+  p.skillCd = p.stats.skillCooldown;
+  p.skillBuffer = 0;
+  p.spin = sk.duration;
+  p.swing = null;
+  for (const e of w.enemies) {
+    if (e.hp > 0 && Math.hypot(e.x - p.x, e.y - p.y) <= sk.radius + e.r) {
+      const crit = w.rng() < p.stats.critChance;
+      damageEnemy(w, e, Math.round(p.stats.skillDamage * (crit ? P.critMult : 1)), Math.atan2(e.y - p.y, e.x - p.x), sk.knockback, crit);
+    }
+  }
+  w.projectiles = w.projectiles.filter((q) => !q.hostile || Math.hypot(q.x - p.x, q.y - p.y) > sk.radius);
+  burst(w, p.x, p.y, 0, 30, 'ember', Math.PI * 2);
+  w.shake = Math.max(w.shake, 4);
+}
+
 function swingHits(w: World, sw: Swing): void {
   const p = w.player, s = p.stats;
   for (const e of w.enemies) {
     if (e.lastSwing === sw.serial || e.hp <= 0 || !inSector(p.x, p.y, sw.dir, s.range, s.arc, e.x, e.y, e.r)) continue;
     e.lastSwing = sw.serial;
-    damageEnemy(w, e, s.damage, sw.dir);
+    const crit = w.rng() < s.critChance;
+    damageEnemy(w, e, Math.round(s.damage * (crit ? P.critMult : 1)), sw.dir, P.attack.knockback, crit);
+    p.fe = Math.min(s.maxFe, p.fe + P.fe.perHit);
   }
   // O golpe também rebate (Auréola Partida) ou destrói projéteis inimigos.
   for (let i = w.projectiles.length - 1; i >= 0; i--) {
@@ -382,7 +488,7 @@ function updateProjectiles(w: World, dt: number): void {
     } else if (!dead) {
       for (const e of w.enemies) {
         if (e.hp > 0 && Math.hypot(q.x - e.x, q.y - e.y) <= q.r + e.r) {
-          damageEnemy(w, e, q.damage, Math.atan2(q.vy, q.vx), 150);
+          damageEnemy(w, e, q.kind === 'wave' ? Math.round(q.damage * (p.stats.damage / P.attack.damage)) : q.damage, Math.atan2(q.vy, q.vx), 150);
           dead = true;
           break;
         }

@@ -14,6 +14,7 @@ function arena(kind: 'penitent' | 'acolyte' | 'brute' | 'angel', ex: number, ey 
   w.player.x = 480; w.player.y = 300;
   const e = spawnEnemy(w, kind, { x: ex, y: ey });
   e.state = 'chase';
+  w.player.stats.critChance = 0;
   return w;
 }
 
@@ -79,7 +80,7 @@ test('bênçãos alteram o jogo', () => {
     w.offer = [id];
     chooseUpgrade(w, id);
   }
-  assert.equal(w.player.maxHp, hp + 2);
+  assert.equal(w.player.maxHp, hp + CONFIG.vigorHp);
   assert.ok(w.player.stats.range > base.range && w.player.stats.cooldown < base.cooldown);
   assert.equal(w.phase, 'exit');
 
@@ -105,13 +106,14 @@ test('Sangue por Sangue cura a cada 3 abates; Passo Sombrio fere ao atravessar',
     const e = spawnEnemy(w, 'penitent', { x: 600 + i * 40, y: 400 });
     damageEnemy(w, e, 999, 0);
   }
-  assert.equal(w.player.hp, 2);
+  run(w, 0.15); // recompensas de abate são processadas no passo, depois do hitstop
+  assert.equal(w.player.hp, 1 + CONFIG.lifestealHeal);
 
   const v = arena('penitent', 540);
   v.upgrades.push('shadowStep');
   const e = v.enemies[0];
   stepWorld(v, { ...idle(), moveX: 1, dodge: true }, STEP);
   run(v, CONFIG.player.dodge.duration + 0.1);
-  assert.equal(e.hp, e.maxHp - 1);
+  assert.equal(e.hp, e.maxHp - CONFIG.shadowStepDamage);
   assert.equal(v.player.hp, v.player.maxHp);
 });

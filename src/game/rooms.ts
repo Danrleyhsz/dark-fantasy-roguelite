@@ -7,7 +7,9 @@ import { parseRoom } from './room.ts';
 
 const WALL = '##############################';
 const OPEN = '#............................#';
-const LIT = '#.......b............b.......#';
+const LIT = '#.c.....b............b.....c.#';
+/** Estátuas de anjos junto às paredes leste/oeste. */
+const SAINTS = '#s..........................s#';
 
 /** Sala avulsa da Fase 1: usada no fundo do menu e nos testes de combate. */
 export const FIRST_ROOM = parseRoom([
@@ -30,7 +32,7 @@ const NAVE = parseRoom([
   OPEN,
   '#....E..................E....#',
   OPEN, OPEN,
-  '#...........E....E...........#',
+  '#s..........E....E..........s#',
   OPEN, OPEN, OPEN, OPEN,
   '#..o..........P...........o..#',
   OPEN,
@@ -46,7 +48,7 @@ const AISLE = parseRoom([
   OPEN,
   '#...E....................E...#',
   '#......o..............o......#',
-  OPEN, OPEN,
+  OPEN, SAINTS,
   '#......o..............o......#',
   OPEN, OPEN,
   '#.............P..............#',
@@ -62,7 +64,7 @@ const CRYPT = parseRoom([
   OPEN,
   '#..oo....................oo..#',
   '#..oo....................oo..#',
-  OPEN,
+  SAINTS,
   '#.....E..............E.......#',
   OPEN,
   '#..oo....................oo..#',
@@ -79,7 +81,7 @@ export const BOSS_ROOM = parseRoom([
   '#....b..................b....#',
   OPEN,
   '#..o..........E...........o..#',
-  OPEN, OPEN, OPEN, OPEN, OPEN, OPEN, OPEN, OPEN,
+  OPEN, OPEN, OPEN, OPEN, SAINTS, OPEN, OPEN, OPEN,
   '#..o..........P...........o..#',
   '#....b..................b....#',
   WALL,

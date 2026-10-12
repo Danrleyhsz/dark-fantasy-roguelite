@@ -32,12 +32,13 @@ export function spawnProjectile(
   });
 }
 
-export function damageEnemy(w: World, e: Enemy, dmg: number, dir: number, knock: number = CONFIG.player.attack.knockback): void {
+/** Aplica dano; a recompensa do abate (experiência, saque) é processada em world.ts. */
+export function damageEnemy(w: World, e: Enemy, dmg: number, dir: number, knock: number = CONFIG.player.attack.knockback, crit = false): void {
   if (e.hp <= 0) return;
   const def = CONFIG.enemies[e.kind];
   e.hp -= dmg;
   e.flash = 0.12;
-  floater(w, e.x, e.y, String(dmg), 'dmg', 60 + e.r * 2);
+  floater(w, e.x, e.y, crit ? `${dmg}!` : String(dmg), crit ? 'crit' : 'dmg', 60 + e.r * 2);
   // Durante preparação/ataque o inimigo não é interrompido: o jogador precisa respeitar o aviso.
   const armored = e.state === 'windup' || e.state === 'act';
   const kb = knock * def.knockback * (armored ? 0.25 : 1);
@@ -59,7 +60,6 @@ export function damageEnemy(w: World, e: Enemy, dmg: number, dir: number, knock:
     w.stats.kills++;
     w.corpses.push({ kind: e.kind, x: e.x, y: e.y, r: e.r, face: e.face, t: 0 });
     burst(w, e.x, e.y, dir, 18, 'bone');
-    if (w.upgrades.includes('lifesteal') && w.stats.kills % CONFIG.lifestealEvery === 0) heal(w, 1);
   }
 }
 
@@ -71,10 +71,11 @@ export function heal(w: World, amount: number): void {
   floater(w, p.x, p.y, `+${amount}`, 'heal');
 }
 
-/** Retorna true se o dano foi aplicado (false durante invulnerabilidade/esquiva). */
-export function hurtPlayer(w: World, dmg: number, fromX: number, fromY: number): boolean {
+/** Retorna true se o dano foi aplicado (false durante invulnerabilidade/esquiva). A armadura reduz o dano. */
+export function hurtPlayer(w: World, rawDmg: number, fromX: number, fromY: number): boolean {
   const p = w.player;
   if (p.invuln > 0 || p.dodge > 0 || p.hp <= 0 || w.outcome) return false;
+  const dmg = Math.max(1, Math.round(rawDmg * (1 - p.stats.armorPct)));
   p.hp = Math.max(0, p.hp - dmg);
   w.stats.damageTaken += dmg;
   floater(w, p.x, p.y, `-${dmg}`, 'hurt');
