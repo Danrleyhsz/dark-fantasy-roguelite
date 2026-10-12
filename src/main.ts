@@ -115,7 +115,8 @@ function sounds(w: World | null): void {
 }
 
 let last = performance.now(), acc = 0, shown: Screen | null = null;
-function frame(now: number): void {
+/** Um quadro: entrada, simulação em passo fixo, telas, som e desenho. */
+function tick(now: number): void {
   const dt = Math.min((now - last) / 1000, CONFIG.maxFrame);
   last = now;
   input.poll();
@@ -143,6 +144,9 @@ function frame(now: number): void {
   sounds(game.screen === 'playing' ? game.world : null);
   renderer.draw(game.world ?? backdrop);
   ui.hud(game.world);
+}
+function frame(now: number): void {
+  tick(now);
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
@@ -153,5 +157,9 @@ requestAnimationFrame(frame);
 if (new URLSearchParams(location.search).has('debug')) {
   (window as unknown as { __debug: unknown }).__debug = {
     room: (depth: number) => game.world && enterRoom(game.world, depth),
+    /** Avança quadros sem requestAnimationFrame (painel oculto pausa o rAF). */
+    frames: (n: number) => {
+      for (let i = 0; i < n; i++) tick(last + 1000 / 60);
+    },
   };
 }

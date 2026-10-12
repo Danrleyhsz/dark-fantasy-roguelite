@@ -57,7 +57,7 @@ async function processSheet(job) {
   const { data, info } = await sharp(job.src).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   const { width: w, height: h } = info;
   keyMagenta(data);
-  if (job.gridLines) removeGridLines(data, w, h);
+  if (job.gridLines) removeGridLines(data, w, h, job.grid[0], job.grid[1]);
   const labels = labelComponents(data, w, h);
   const comps = componentStats(labels, w, h);
   const [gx, gy] = job.grid;
@@ -135,17 +135,24 @@ function keyMagenta(d) {
 const clamp = (v) => (v < 0 ? 0 : v > 255 ? 255 : Math.round(v));
 
 /**
- * O Gemini às vezes desenha linhas de grade entre as células (job.gridLines). Uma linha/coluna 90%
- * opaca não pode ser arte (cada pose ocupa uma célula), então vira fundo, com folga de 4 px.
+ * O Gemini às vezes desenha linhas de grade entre as células (job.gridLines). Só procura perto das
+ * divisas esperadas entre células (a arte fica no centro delas): uma linha/coluna ali 90% opaca é
+ * grade e vira fundo, com folga de 4 px. Fora das divisas, props altos alinhados não são tocados.
  */
-function removeGridLines(d, w, h) {
+function removeGridLines(d, w, h, gx, gy) {
+  const nearBoundary = (v, size, cells) => {
+    for (let k = 1; k < cells; k++) if (Math.abs(v - (k * size) / cells) <= size * 0.025) return true;
+    return false;
+  };
   const rows = [], cols = [];
   for (let y = 0; y < h; y++) {
+    if (!nearBoundary(y, h, gy)) continue;
     let n = 0;
     for (let x = 0; x < w; x++) if (d[(y * w + x) * 4 + 3] > 127) n++;
     if (n > w * 0.9) rows.push(y);
   }
   for (let x = 0; x < w; x++) {
+    if (!nearBoundary(x, w, gx)) continue;
     let n = 0;
     for (let y = 0; y < h; y++) if (d[(y * w + x) * 4 + 3] > 127) n++;
     if (n > h * 0.9) cols.push(x);
