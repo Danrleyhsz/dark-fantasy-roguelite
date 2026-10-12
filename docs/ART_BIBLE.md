@@ -30,5 +30,13 @@ Cenários em camadas com profundidade e áreas de combate desobstruídas. HUD mi
 ## Regras para geração de imagens
 Todo prompt deve especificar: sujeito, vista/câmera, pose, iluminação, paleta, nível de detalhe, fundo/transparência e uso pretendido. Para sprites, pedir orientação consistente, enquadramento uniforme e fundo transparente quando apropriado. Não usar imagem promocional como sprite de gameplay sem recorte e validação.
 
+## Produção (registro)
+- Sprites e texturas são gerados no **Gemini (app web)**, numa mesma conversa para manter o estilo. Os prompts exatos ficam em `art/PROMPTS.md`, os originais em `art/raw/`, e o processamento é feito por `npm run art`.
+- **Fundo magenta chapado #FF00FF** para recorte (o Gemini não entrega transparência real). Evitar roxo, violeta e rosa nos prompts.
+- Folhas de sprites em grade 2x2, todas as poses voltadas para a direita (o jogo espelha).
+- **Estilo observado:** nos sprites de jogo o Gemini entrega tinta forte com hachura moderada, mais limpa que a gravura pura. Aceito de propósito pela legibilidade em ~64 px. A textura de xilogravura mais pesada fica para ilustrações estáticas (menu, cartas de recompensa).
+- **Paleta final:** valores em `src/rendering/theme.ts`, publicados como variáveis CSS para a interface.
+- Pisos são escuros e de baixo contraste; o pipeline ainda comprime o contraste para a armadura escura do jogador continuar legível.
+
 ## Consistência e direitos
 Registrar caminho, descrição, formato, dimensões, origem, licença e status no ASSET_MANIFEST. Não copiar personagens, logotipos ou arte protegida de jogos existentes. Referências servem para direção estética, não para reprodução literal.

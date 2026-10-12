@@ -1,0 +1,61 @@
+import { META, type MetaId, type MetaLevels } from '../game/upgrades.ts';
+
+/** Só o necessário (TECHNICAL_DESIGN): progressão permanente, recordes e configurações. */
+export interface SaveData {
+  version: 1;
+  ashes: number;
+  meta: MetaLevels;
+  best: { runs: number; wins: number; depth: number };
+  settings: { reduceMotion: boolean };
+}
+
+export type StorageLike = Pick<Storage, 'getItem' | 'setItem'>;
+
+const KEY = 'dark-fantasy-roguelite/save';
+
+export function defaultSave(): SaveData {
+  return {
+    version: 1,
+    ashes: 0,
+    meta: { vigor: 0, edge: 0, breath: 0 },
+    best: { runs: 0, wins: 0, depth: 0 },
+    settings: { reduceMotion: false },
+  };
+}
+
+/** Lê o progresso. Ausente, corrompido, de outro formato ou armazenamento indisponível: valores padrão. */
+export function loadSave(storage: StorageLike | null): SaveData {
+  const save = defaultSave();
+  let raw: unknown = null;
+  try {
+    const text = storage?.getItem(KEY);
+    raw = text ? JSON.parse(text) : null;
+  } catch {
+    return save;
+  }
+  if (!raw || typeof raw !== 'object') return save;
+  const r = raw as { ashes?: unknown; meta?: Record<string, unknown>; best?: Record<string, unknown>; settings?: Record<string, unknown> };
+  save.ashes = int(r.ashes, 1_000_000);
+  for (const id of Object.keys(META) as MetaId[]) save.meta[id] = int(r.meta?.[id], META[id].costs.length);
+  save.best.runs = int(r.best?.runs, 1_000_000);
+  save.best.wins = Math.min(int(r.best?.wins, 1_000_000), save.best.runs);
+  save.best.depth = int(r.best?.depth, 100);
+  save.settings.reduceMotion = r.settings?.reduceMotion === true;
+  return save;
+}
+
+/** Inteiro entre 0 e max; qualquer outra coisa vira 0. */
+function int(v: unknown, max: number): number {
+  return typeof v === 'number' && Number.isFinite(v) ? Math.min(max, Math.max(0, Math.floor(v))) : 0;
+}
+
+/** Grava o progresso. Retorna false se o armazenamento falhar ou não existir (o jogo segue sem salvar). */
+export function writeSave(storage: StorageLike | null, data: SaveData): boolean {
+  if (!storage) return false;
+  try {
+    storage.setItem(KEY, JSON.stringify(data));
+    return true;
+  } catch {
+    return false;
+  }
+}

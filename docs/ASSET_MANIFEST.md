@@ -12,24 +12,39 @@ Este documento registra os recursos visuais e sonoros do jogo. Atualize-o sempre
 
 ## Inventário inicial
 
-| ID | Recurso | Uso | Estado inicial | Observações |
+| ID | Recurso | Uso | Estado | Caminho verificado / observações |
 |---|---|---|---|---|
-| ENV-001 | Piso e paredes da primeira sala | Cenário jogável | A criar/verificar | Área central livre para combate |
-| ENV-002 | Elementos de ruína e decoração | Fundo e profundidade | A criar/verificar | Não reduzir a legibilidade |
-| CHAR-001 | Personagem do jogador | Movimento e combate | A criar/verificar | Silhueta reconhecível em tamanho pequeno |
-| EN-001 | Inimigo básico corpo a corpo | Primeiro combate | A criar/verificar | Preparação de ataque claramente visível |
-| EN-002 | Inimigo de ataque à distância | Variedade de combate | Planejado | Projétil e origem do ataque legíveis |
-| EN-003 | Inimigo pesado ou veloz | Variedade de combate | Planejado | Padrão distinto dos demais |
-| BOSS-001 | Chefe inicial | Encontro final do protótipo | Planejado | Fases telegráficas e ataques justos |
-| FX-001 | Efeito de impacto | Feedback de dano | A criar/verificar | Curto e sem encobrir a ação |
-| FX-002 | Efeito de esquiva | Feedback defensivo | A criar/verificar | Discreto |
-| UI-001 | Ícones de vida e recursos | HUD | A criar/verificar | Alto contraste |
-| UI-002 | Ícones de armas e melhorias | Escolhas e inventário | A criar/verificar | Estilo consistente |
-| SFX-001 | Ataque, impacto e dano | Feedback sonoro | Opcional/A criar | Controle de volume e opção de silenciar |
-| SFX-002 | Interface e recompensa | Feedback de UI | Opcional/A criar | Não intrusivo |
-| MUS-001 | Música de ambiente | Atmosfera | Opcional/A criar | Licença compatível; silenciável |
+| ENV-001 | Piso e paredes da primeira sala | Cenário jogável | Implementado | `public/assets/environment/floor.jpg`, `wall.jpg`; centro da sala livre |
+| ENV-002 | Elementos de ruína e decoração | Fundo e profundidade | Implementado (parcial) | `public/assets/environment/props.png`: vitral, portas, coluna. Faltam velas, ossos, entulho |
+| CHAR-001 | Personagem do jogador | Movimento e combate | Implementado | `public/assets/characters/player.png` (4 poses) |
+| EN-001 | Inimigo básico corpo a corpo | Primeiro combate | Implementado | `public/assets/enemies/penitent.png` (4 poses, preparação com olhos vermelhos) |
+| EN-002 | Inimigo de ataque à distância | Variedade de combate | Pendente | Fase 2 |
+| EN-003 | Inimigo pesado ou veloz | Variedade de combate | Pendente | Fase 2 |
+| BOSS-001 | Chefe inicial | Encontro final do protótipo | Pendente | Fase 2 |
+| FX-001 | Efeito de impacto | Feedback de dano | Placeholder | Desenhado em código (arco do golpe, partículas, brilho); sem arquivo |
+| FX-002 | Efeito de esquiva | Feedback defensivo | Pendente | A esquiva entra na Fase 2 |
+| UI-001 | Ícones de vida e recursos | HUD | Placeholder | Losangos em CSS (`.pip`) + texto "3/5" |
+| UI-002 | Ícones de armas e melhorias | Escolhas e inventário | Pendente | Fase 2 (recompensas) |
+| SFX-001 | Ataque, impacto e dano | Feedback sonoro | Pendente | Opcional |
+| SFX-002 | Interface e recompensa | Feedback de UI | Pendente | Opcional |
+| MUS-001 | Música de ambiente | Atmosfera | Pendente | Opcional |
 
-Os estados são uma lista inicial de planejamento, não uma afirmação de que os recursos já existem. Após inspecionar o repositório, substitua cada estado por `Implementado`, `Placeholder`, `Pendente` ou `Bloqueado` com caminho verificado.
+## Arquivos registrados
+
+Origem comum: **gerados no Google Gemini (app web, conta do usuário, modo Pro) em 11/10/2026**, baixados em JPEG e processados por `npm run art` (`tools/art.mjs`): fundo magenta removido, poses recortadas por componentes conexos, escala e âncora (pés) normalizadas, PNG com paleta. Prompts exatos em `art/PROMPTS.md`; originais em `art/raw/`. **Licença:** conteúdo gerado sob os termos de uso do Google Gemini; sem atribuição exigida conhecida. Revisar os termos antes de uso comercial. **Estado:** em revisão (revisados por Claude; aguardando aprovação do usuário).
+
+| ID | Caminho | Uso | Formato e dimensões | Fonte bruta | Observações |
+|---|---|---|---|---|---|
+| CHAR-001 | `public/assets/characters/player.png` | Cavaleiro amaldiçoado | PNG RGBA, 4 quadros de 205×196 (820×196) | `art/raw/player-knight-sheet.jpg` (2048²) | Quadros: idle, run, slash, dodge. Âncora nos pés (102.5, 194). Versão editada no Gemini para segurar a espada na corrida e na esquiva |
+| EN-001 | `public/assets/enemies/penitent.png` | Penitente | PNG RGBA, 4 quadros de 206×196 | `art/raw/penitent-sheet.jpg` (2048²) | Quadros: pray, walk, windup, attack. Usa duas foices em algumas poses e uma em outras (aceito: imperceptível em ~64 px) |
+| ENV-001a | `public/assets/environment/floor.jpg` | Piso ladrilhável | JPEG 512×512 (= 256 px lógicos) | `art/raw/floor-tile.jpg` (2048²) | Contraste comprimido (`linear 0.8, +30`) para os personagens lerem melhor |
+| ENV-001b | `public/assets/environment/wall.jpg` | Alvenaria ladrilhável | JPEG 384×384 (= 192 px lógicos) | `art/raw/wall-masonry.jpg` (2048²) | Emenda vertical leve; invisível na parede do fundo (3 tiles) |
+| ENV-002 | `public/assets/environment/props.png` | Vitral, porta fechada, porta aberta, coluna | PNG RGBA, 4 quadros de 196×196 | `art/raw/props-architecture.jpg` (2048²) | Porta aberta reservada para a saída da sala (Fase 2) |
+
+Descartados: uma primeira versão do jogador sem espada em duas poses e um piso 16:9 com lajes grandes demais para a escala dos personagens.
+
+## Referências locais (não distribuídas)
+`referencia/` guarda 5 imagens de terceiros usadas só como direção estética (uma com marca d'água de outro autor). A pasta está no `.gitignore` porque o repositório é público; nenhuma delas é usada no jogo nem enviada ao Gemini.
 
 ## Modelo de registro por recurso
 

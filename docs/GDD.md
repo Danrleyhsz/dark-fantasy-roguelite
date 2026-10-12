@@ -52,6 +52,14 @@ A história é contada por detalhes de cenário, descrições curtas, relíquias
 ## Fora do escopo do primeiro protótipo
 Multiplayer, PvP, backend obrigatório, mundo aberto, geração procedural complexa, dezenas de classes, loja com dinheiro real e sistemas online. Só considerar depois que o núcleo estiver divertido e estável.
 
+## Decisões registradas na implementação
+Decisões que o GDD não definia; escolhidas pela opção mais simples e reversível. Valores exatos em `src/game/config.ts`.
+- **Câmera:** vista top-down 3/4, sala inteira na tela (30×17 tiles).
+- **Controles:** WASD/setas para mover; J, Z ou clique para atacar (o clique mira no cursor); Esc/P para pausar. No toque: joystick flutuante na metade esquerda, toque na metade direita ou botão Atacar.
+- **Jogador:** 5 de vida; golpe em arco à frente (1 de dano, recarga 0,34 s, entrada antecipada aceita por 0,15 s); 1 s de invulnerabilidade após dano.
+- **EN-001 Penitente:** peregrino morto-vivo que reza até o jogador se aproximar; persegue contornando obstáculos; prepara a foice por 0,6 s com aviso visível e golpeia em arco; fica 0,7 s vulnerável depois. Não é interrompido durante a preparação, então o jogador precisa sair da área marcada. 4 de vida.
+- **Título provisório:** "Dark Fantasy Roguelite" (nome do repositório) até haver um nome definido.
+
 ## Critérios de sucesso do protótipo
 - Abre em navegador moderno sem instalação especial.
 - Jogador move, ataca, sofre dano e pode derrotar um inimigo.
