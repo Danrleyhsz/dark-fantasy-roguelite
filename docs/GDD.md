@@ -58,3 +58,14 @@ Multiplayer, PvP, backend obrigatório, mundo aberto, geração procedural compl
 - Reiniciar não deixa estados antigos corrompidos.
 - Layout funciona em janela estreita e larga.
 - Nenhum recurso essencial está ausente ou referenciado por caminho quebrado.
+
+## Revisão de direção aprovada pelo usuário
+A especificação de referência é `docs/VISUAL_DIRECTION_APPROVED.md` e prevalece sobre descrições conflitantes neste documento.
+
+- **Gênero:** RPG de ação com progressão e estrutura roguelite.
+- **Câmera:** visão de cima em perspectiva isométrica.
+- **Meta visual:** ilustração dark fantasy detalhada, com ruínas góticas, arquitetura antiga, luz dramática, névoa, materiais ricos e personagens/monstros distintos. Não usar pixel art nem formas básicas como estilo final.
+- **HUD:** acabamento gótico ornamental e legível, com vida/recursos, habilidades, minimapa e objetivo da missão quando adequado.
+- **Progressão RPG:** atributos, equipamentos, raridades, habilidades e builds devem ser pilares explícitos, além das melhorias entre incursões.
+- **Primeira fatia vertical:** área gótica isométrica, protagonista controlável, inimigo funcional, ataque/efeito visual, HUD e uma progressão ou recompensa demonstrável.
+- **Critério de arte:** a captura precisa vir do protótipo funcional e mostrar os assets realmente integrados; imagens conceituais servem de referência e não contam como gameplay implementado.
