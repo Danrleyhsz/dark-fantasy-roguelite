@@ -37,7 +37,7 @@ Este repositório contém um roguelite dark fantasy 2D para navegador. Leia este
 - Se uma decisão importante não estiver documentada, escolha a opção mais simples e reversível e registre a decisão.
 
 ## Comandos
-`npm install` · `npm run dev` (http://localhost:5173; `?debug` liga atalhos de teste) · `npm test` · `npm run check` · `npm run build` · `npm run preview` · `npm run art` (reprocessa `art/raw/iso/`) · `node tools/balance.ts 30` (simula incursões). Detalhes em `docs/TECHNICAL_DESIGN.md`.
+`npm install` · `npm run dev` (http://localhost:5173; `?debug` liga atalhos de teste) · `npm test` · `npm run check` · `npm run build` · `npm run preview` · `npm run art` (reprocessa `art/raw/iso/`) · `npm run deploy` (publica no GitHub Pages) · `node tools/balance.ts 30` (simula incursões). Detalhes em `docs/TECHNICAL_DESIGN.md`.
 
 ## Arte gerada
 Gerar imagens pelo Gemini **no Chrome do usuário** (app web, conta logada), não pela API. Seguir `art/PROMPTS.md` (fundo magenta #FF00FF, folhas em grade), baixar para `art/raw/iso/`, rodar `npm run art` e registrar cada recurso no ASSET_MANIFEST. `referencia/` é só local (fora do git).

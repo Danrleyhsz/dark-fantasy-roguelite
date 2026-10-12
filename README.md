@@ -6,7 +6,7 @@ RPG de ação isométrico com estrutura roguelite, em fantasia sombria, que roda
 Um cavaleiro amaldiçoado desce às ruínas de uma catedral, atravessa cinco salas de penitentes, acólitos e flagelantes, escolhe bênçãos que mudam o estilo de luta, coleta equipamentos de raridades variadas e enfrenta o Anjo Caído. Morrer encerra a incursão, mas o nível do herói e as cinzas gastas no Relicário permanecem.
 
 ## Jogar
-- **Online:** veja o link do GitHub Pages na seção "Publicação" de `docs/ROADMAP.md`.
+- **Online:** https://danrleyhsz.github.io/dark-fantasy-roguelite/ (GitHub Pages; também no celular).
 - **Local:** requer Node.js 22.18 ou mais recente.
 
 ```bash
@@ -31,6 +31,7 @@ npm run check      # checagem de tipos
 npm run build      # build de produção em dist/
 npm run preview    # serve dist/ em http://localhost:4173
 npm run art        # reprocessa a arte de art/raw/iso/ para public/assets/
+npm run deploy     # build + publica dist/ no ramo gh-pages (GitHub Pages)
 node tools/balance.ts 30   # simula 30 incursões com o bot e resume a dificuldade
 ```
 

@@ -50,6 +50,7 @@ Leia `docs/VISUAL_DIRECTION_APPROVED.md` antes de escolher a solução de render
 - **Sem dependências em tempo de execução.** Desenvolvimento: `vite`, `typescript`, `@types/node` (tipos dos testes) e `sharp` (só o pipeline de arte).
 - **Testes com o executor nativo do Node** (`node --test`; Node ≥ 22.18 roda `.ts` direto). Por isso os imports têm extensão `.ts` e o `tsconfig` exige `erasableSyntaxOnly`.
 - Build com `--base=./`: `dist/` funciona em qualquer subcaminho (GitHub Pages).
+- **Publicação:** GitHub Pages serve o ramo `gh-pages`, que guarda só a build (um commit por publicação, com `.nojekyll`). `tools/deploy.mjs` monta o commit com um índice temporário, sem tocar na cópia de trabalho. URL: https://danrleyhsz.github.io/dark-fantasy-roguelite/
 
 ### Comandos
 | Comando | O que faz |
@@ -61,6 +62,7 @@ Leia `docs/VISUAL_DIRECTION_APPROVED.md` antes de escolher a solução de render
 | `npm run build` | checagem de tipos + build de produção em `dist/` |
 | `npm run preview` | serve a build de produção em http://localhost:4173 |
 | `npm run art` | reprocessa `art/raw/iso/` em `public/assets/` e regera `src/rendering/art.gen.ts` |
+| `npm run deploy` | build + publica `dist/` no ramo `gh-pages` (`tools/deploy.mjs`) |
 | `node tools/balance.ts 30` | simula 30 incursões com o bot dos testes e resume a dificuldade |
 
 ### Estrutura real

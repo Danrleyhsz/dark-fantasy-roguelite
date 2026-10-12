@@ -24,12 +24,10 @@ try {
   const tree = git(['write-tree'], env);
   const source = git(['rev-parse', '--short', 'HEAD'], env);
   let parent = [];
-  try {
+  if (git(['ls-remote', '--heads', 'origin', BRANCH], env)) {
     git(['fetch', '--quiet', 'origin', BRANCH], env);
     parent = ['-p', git(['rev-parse', 'FETCH_HEAD'], env)];
-  } catch {
-    console.log(`Ramo ${BRANCH} ainda não existe no remoto: será criado.`);
-  }
+  } else console.log(`Ramo ${BRANCH} ainda não existe no remoto: será criado.`);
   const commit = git(['commit-tree', tree, ...parent, '-m', `Publica a build de ${source}`], env);
   git(['push', 'origin', `${commit}:refs/heads/${BRANCH}`], env);
   console.log(`${BRANCH} ← ${commit.slice(0, 7)} (build de ${source})`);

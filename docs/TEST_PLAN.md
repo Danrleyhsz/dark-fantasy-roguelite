@@ -5,10 +5,10 @@ Marcar um item como concluído somente depois de executá-lo. Registrar navegado
 ## Como os testes foram executados
 - **Automáticos:** `npm test` (62 testes `node:test`, Node 24.18, Windows 11) e `npm run check`. Cobrem colisão, combate, esquiva, os quatro inimigos e o chefe, projéteis, ondas, bênçãos, RPG (níveis, itens, habilidade, armadura), salvamento (dados corrompidos, armazenamento indisponível, falha de escrita), projeção isométrica, telas, reinício e renderização (contexto 2D falso que falha com NaN). Inclui **incursões completas** jogadas por um bot.
 - **Balanceamento:** `node tools/balance.ts 30` → o bot (reação perfeita) vence 27/30, morre nas salas 3–4, termina com ~93% de vida e leva ~2,6 min por incursão.
-- **Navegador:** Chromium embutido do app Claude Desktop, servidor de desenvolvimento e **build de produção** (`npm run preview`). Entradas reais do DOM (KeyboardEvent/PointerEvent), cliques nas cartas e botões. Com o painel oculto, os quadros foram avançados por `__debug.frames()` (`?debug`).
+- **Navegador:** Chromium embutido do app Claude Desktop, servidor de desenvolvimento, **build de produção** (`npm run preview`) e a **versão publicada** no GitHub Pages. Entradas reais do DOM (KeyboardEvent/PointerEvent), cliques nas cartas e botões. Com o painel oculto, os quadros foram avançados por `__debug.frames()` (`?debug`).
 - **Celular:** emulação 375×812 (retrato) e 844×390 (paisagem) com eventos de toque sintéticos. **Nenhum aparelho físico testado.**
 
-Última execução: 12/10/2026 (direção isométrica, Fases 2–4).
+Última execução: 12/10/2026 (direção isométrica, Fases 2–5, incluindo a URL publicada).
 
 ## 1. Inicialização e navegação
 - [x] A página carrega sem erro fatal. *Dev e produção; console sem erros; 12 assets com HTTP 200.*
@@ -62,7 +62,7 @@ Marcar um item como concluído somente depois de executá-lo. Registrar navegado
 - [x] Executar os scripts de lint/teste/build existentes. *`npm test`, `npm run check`, `npm run build`. Não há linter configurado.*
 - [x] Confirmar que a build de produção termina sem erros. *JS 66 KB (25 KB gzip), CSS 10 KB, 1,1 MB com a arte.*
 - [x] Testar a versão compilada, não apenas o servidor de desenvolvimento. *Incursão completa pelo fluxo real, pausa, saque, opções e derrota na build.*
-- [ ] Se publicado, abrir a URL HTTPS e verificar carregamento de assets e controles. *Ver ROADMAP, Fase 5.*
+- [x] Se publicado, abrir a URL HTTPS e verificar carregamento de assets e controles. *https://danrleyhsz.github.io/dark-fantasy-roguelite/: 12 assets com HTTP 200, arte de capa no menu, teclado e mouse em desktop, toque em emulação 375×812 (12/10/2026).*
 
 ## Modelo para registrar falhas
 **ID:**  

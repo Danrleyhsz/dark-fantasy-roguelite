@@ -41,15 +41,15 @@ A roadmap é incremental. O Claude deve inspecionar o código e marcar apenas ta
 - [x] Ajustar vida, dano, velocidade e dificuldade com testes reais. *Simulação com bot (`tools/balance.ts`): de trivial (20/20 vitórias, 76 s) para 27/30 com ondas, escala por sala e chefe com 600 de vida. Falta teste com pessoas.*
 - [x] Testar salvamento e recuperação de dados inválidos. *`save.test.ts`.*
 - [x] Verificar reinício repetido, foco da janela e limpeza de eventos.
-- [x] Corrigir erros de console, carregamento e desempenho. *Console sem erros; corrigidos: props cortados pelo pipeline, jogador encoberto pelo chefe, arte de capa com URL relativa quebrada, HUD sobreposto em retrato.*
+- [x] Corrigir erros de console, carregamento e desempenho. *Console sem erros; corrigidos: props cortados pelo pipeline, jogador encoberto pelo chefe, arte de capa com URL relativa quebrada, HUD sobreposto em retrato, fase 2 do chefe calculada pela vida base (e não pela escalada), erro fatal ao clicar durante o carregamento.*
 - [x] Executar TEST_PLAN.md e registrar limitações. *Sem aparelho físico, Firefox ou Safari.*
 **Critério de conclusão:** o fluxo principal funciona de forma consistente.
 
-## Fase 5: publicação — em andamento
+## Fase 5: publicação — concluída em 12/10/2026
 - [x] Documentar comandos de instalação, desenvolvimento e build. *README, CLAUDE.md e TECHNICAL_DESIGN.*
 - [x] Confirmar build de produção. *`npm run build` sem erros; `npm run preview` testado.*
-- [ ] Configurar hospedagem estática compatível, como GitHub Pages, se adequada.
-- [ ] Testar a URL publicada em desktop e celular.
+- [x] Configurar hospedagem estática compatível, como GitHub Pages, se adequada. *GitHub Pages pelo ramo `gh-pages` (só a build), publicado com `npm run deploy`: https://danrleyhsz.github.io/dark-fantasy-roguelite/*
+- [x] Testar a URL publicada em desktop e celular. *HTTPS, 12 assets com HTTP 200, sem erros no console; teclado, mouse, pausa e painel do personagem em desktop; joystick, botões Atacar/Esquivar/Ira e toque na metade direita em emulação 375×812, sem rolagem horizontal. Falta aparelho físico.*
 - [x] Atualizar README com instruções reais.
 **Critério de conclusão:** outra pessoa consegue abrir o link e jogar sem instalar nada.
 
