@@ -76,23 +76,42 @@ export function moveAndCollide(room: Room, b: Body, dx: number, dy: number): boo
   return hit;
 }
 
+/** Raspar uma quina por até esta medida desliza o corpo para o lado livre em vez de travar. */
+const CORNER = 3;
+
 function moveAxis(room: Room, b: Body, dx: number, dy: number): boolean {
   if (dx === 0 && dy === 0) return false;
   b.x += dx;
   b.y += dy;
+  const hit = solidUnder(room, b);
+  if (!hit) return false;
+  const { tx, ty } = hit;
+  // Quina raspada: sem isso, um corpo do tamanho de um tile (Flagelante) travava ao lado de colunas.
+  const push = dx !== 0
+    ? ((ty + 0.5) * T < b.y ? (ty + 1) * T - (b.y - b.r) : ty * T - (b.y + b.r))
+    : ((tx + 0.5) * T < b.x ? (tx + 1) * T - (b.x - b.r) : tx * T - (b.x + b.r));
+  if (Math.abs(push) <= CORNER) {
+    if (dx !== 0) b.y += push;
+    else b.x += push;
+    if (!solidUnder(room, b)) return false;
+    if (dx !== 0) b.y -= push;
+    else b.x -= push;
+  }
+  if (dx > 0) b.x = tx * T - b.r;
+  else if (dx < 0) b.x = (tx + 1) * T + b.r;
+  if (dy > 0) b.y = ty * T - b.r;
+  else if (dy < 0) b.y = (ty + 1) * T + b.r;
+  return true;
+}
+
+/** Primeiro tile sólido sob a caixa do corpo, ou null. */
+function solidUnder(room: Room, b: Body): { tx: number; ty: number } | null {
   const x0 = Math.floor((b.x - b.r) / T), x1 = Math.floor((b.x + b.r - EPS) / T);
   const y0 = Math.floor((b.y - b.r) / T), y1 = Math.floor((b.y + b.r - EPS) / T);
   for (let ty = y0; ty <= y1; ty++) {
-    for (let tx = x0; tx <= x1; tx++) {
-      if (!solidAt(room, tx, ty)) continue;
-      if (dx > 0) b.x = tx * T - b.r;
-      else if (dx < 0) b.x = (tx + 1) * T + b.r;
-      if (dy > 0) b.y = ty * T - b.r;
-      else if (dy < 0) b.y = (ty + 1) * T + b.r;
-      return true;
-    }
+    for (let tx = x0; tx <= x1; tx++) if (solidAt(room, tx, ty)) return { tx, ty };
   }
-  return false;
+  return null;
 }
 
 /** Linha de visão para um corpo de raio r: centro e duas bordas laterais. */

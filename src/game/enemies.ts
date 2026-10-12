@@ -101,7 +101,7 @@ export function updateEnemy(w: World, e: Enemy, dt: number): void {
     case 'chase': {
       e.face = toPlayer;
       const los = clearPath(w.room, e.x, e.y, p.x, p.y, 0);
-      const pick = e.cd > 0 ? -1 : pickAttack(e, def, dist, los, p.r);
+      const pick = e.cd > 0 ? -1 : pickAttack(w, e, def, dist, los, p.r);
       if (pick >= 0) {
         e.attack = pick;
         setState(e, 'windup');
@@ -164,12 +164,17 @@ export function updateEnemy(w: World, e: Enemy, dt: number): void {
   e.vy = Math.abs(e.vy * k) < 1 ? 0 : e.vy * k;
 }
 
-/** Próximo ataque utilizável (o chefe alterna em ciclo); -1 se nenhum. */
-function pickAttack(e: Enemy, def: EnemyDef, dist: number, los: boolean, playerR: number): number {
-  const n = def.attacks.length;
+/**
+ * Próximo ataque utilizável (o chefe alterna em ciclo); -1 se nenhum.
+ * Investidas exigem caminho livre para o corpo inteiro: sem isso o inimigo batia na coluna à frente
+ * e ficava num ciclo de investida e atordoamento.
+ */
+function pickAttack(w: World, e: Enemy, def: EnemyDef, dist: number, los: boolean, playerR: number): number {
+  const n = def.attacks.length, p = w.player;
   for (let k = 0; k < n; k++) {
     const i = (e.next + k) % n, a = def.attacks[i];
-    if (dist <= a.range + playerR && (los || a.kind === 'slam')) {
+    const clear = a.kind === 'slam' || (a.kind === 'charge' ? clearPath(w.room, e.x, e.y, p.x, p.y, e.r) : los);
+    if (dist <= a.range + playerR && clear) {
       e.next = (i + 1) % n;
       return i;
     }

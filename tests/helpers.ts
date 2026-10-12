@@ -57,9 +57,12 @@ export function fighter(w: World): InputState {
   if (!target) return idle();
   const dx = target.x - p.x, dy = target.y - p.y, d = Math.hypot(dx, dy) || 1;
   const inRange = d < p.stats.range + target.r - 4;
-  return inRange
-    ? { ...idle(), attack: true, aimAt: { x: target.x, y: target.y } }
-    : { ...idle(), moveX: dx / d, moveY: dy / d };
+  // Ira Flamejante quando ela pega dois ou mais inimigos.
+  const sk = CONFIG.player.skill;
+  const near = w.enemies.filter((e) => e.spawn <= 0 && Math.hypot(e.x - p.x, e.y - p.y) <= sk.radius + e.r).length;
+  const skill = p.fe >= sk.cost && p.skillCd === 0 && near >= 2;
+  if (inRange) return { ...idle(), attack: true, aimAt: { x: target.x, y: target.y }, skill };
+  return { ...walkTo(w, target.x, target.y), skill };
 }
 
 /** Piloto da incursão inteira: luta, escolhe a primeira bênção e caminha até a porta aberta. */
@@ -75,19 +78,31 @@ export function playRun(g: Game, maxSeconds: number): void {
   }
 }
 
-const doorFields = new WeakMap<Room, Int16Array>();
+/** Campos de fluxo por sala e tile de destino (mesmo BFS da IA dos inimigos). */
+const fields = new WeakMap<Room, Map<number, Int16Array>>();
 
-/** Caminha até a porta norte contornando colunas e braseiros (mesmo campo de fluxo da IA). */
-export function toDoor(w: World): InputState {
-  const p = w.player, tx = CONFIG.view.w / 2, ty = 3 * CONFIG.tile + p.r;
-  let dist = doorFields.get(w.room);
+/** Anda até (tx, ty) em linha reta se o corpo passa; senão contorna colunas e braseiros pelo campo de fluxo. */
+function walkTo(w: World, tx: number, ty: number): InputState {
+  const p = w.player, T = CONFIG.tile, tile = Math.floor(ty / T) * w.room.cols + Math.floor(tx / T);
+  if (clearPath(w.room, p.x, p.y, tx, ty, p.r)) {
+    const d = Math.hypot(tx - p.x, ty - p.y) || 1;
+    return { ...idle(), moveX: (tx - p.x) / d, moveY: (ty - p.y) / d };
+  }
+  let byTile = fields.get(w.room);
+  if (!byTile) fields.set(w.room, (byTile = new Map()));
+  let dist = byTile.get(tile);
   if (!dist) {
     dist = new Int16Array(w.room.cols * w.room.rows);
-    computeFlowField(w.room, tx - 1, ty, dist, new Int32Array(dist.length));
-    doorFields.set(w.room, dist);
+    computeFlowField(w.room, tx, ty, dist, new Int32Array(dist.length));
+    byTile.set(tile, dist);
   }
-  const a = clearPath(w.room, p.x, p.y, tx, ty, p.r) ? Math.atan2(ty - p.y, tx - p.x) : flowAngle(w.room, dist, p.x, p.y);
+  const a = flowAngle(w.room, dist, p.x, p.y);
   return Number.isNaN(a) ? idle() : { ...idle(), moveX: Math.cos(a), moveY: Math.sin(a) };
+}
+
+/** Caminha até a porta norte contornando colunas e braseiros. */
+export function toDoor(w: World): InputState {
+  return walkTo(w, CONFIG.view.w / 2 - 1, 3 * CONFIG.tile + w.player.r);
 }
 
 /**

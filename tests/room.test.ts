@@ -55,6 +55,17 @@ test('desliza ao longo da parede em movimento diagonal', () => {
   assert.ok(b.y > y0, 'devia deslizar para baixo');
 });
 
+test('corpo do tamanho de um tile desliza ao raspar a quina de uma coluna em vez de travar', () => {
+  const r = FIRST_ROOM; // coluna em (3,4)
+  // Raio 16 (Flagelante) passando logo abaixo da coluna, raspando 0,5 na quina.
+  const b = { x: 6 * T, y: 5 * T + 16 - 0.5, r: 16 };
+  for (let i = 0; i < 60; i++) {
+    moveAndCollide(r, b, -3, 0);
+    assert.ok(!overlapsSolid(r, b), `dentro da coluna no passo ${i}`);
+  }
+  assert.equal(b.x, T + 16, 'devia passar pela coluna e parar na parede oeste');
+});
+
 test('linha de visão bloqueada por pilar; campo de fluxo contorna o pilar', () => {
   const r = FIRST_ROOM; // pilar em (3,4)
   const a = { x: 3.5 * T, y: 3.5 * T }, b = { x: 3.5 * T, y: 5.5 * T };

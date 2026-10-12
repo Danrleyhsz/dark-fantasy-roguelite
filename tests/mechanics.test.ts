@@ -51,8 +51,10 @@ test('Flagelante: preparação mostra a faixa da investida; ao bater na parede f
   const lane = dangers(e)[0];
   assert.equal(lane.shape, 'lane');
   assert.ok(inDanger(lane, w.player.x, w.player.y, w.player.r));
-  w.player.y = 450; // sai da faixa
   const charge = CONFIG.enemies.brute.attacks[0] as ChargeAttack;
+  run(w, charge.windup * 0.5); // a mira acompanha o jogador até 40% da preparação e então trava
+  assert.equal(e.state, 'windup');
+  w.player.y = 450; // sai da faixa travada
   run(w, charge.windup + charge.duration);
   assert.equal(e.state, 'stun');
   assert.equal(w.player.hp, w.player.maxHp);
