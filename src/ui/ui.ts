@@ -59,6 +59,7 @@ export function createUI(game: Game, h: UIHandlers): UI {
   // URL absoluta: url() relativa numa variável CSS seria resolvida a partir do arquivo de estilo.
   const keyArt = art.keyArt?.src;
   if (keyArt) for (const el of [menu, end]) el.style.setProperty('--key-art', `url("${new URL(keyArt, document.baseURI).href}")`);
+  loadHudFrames();
   paintIcon($('slot-attack').querySelector('.slot-icon')!, ICON.attack);
   paintIcon($('slot-dodge').querySelector('.slot-icon')!, ICON.dodge);
   paintIcon($('slot-skill').querySelector('.slot-icon')!, ICON.skill);
@@ -294,7 +295,7 @@ export function createUI(game: Game, h: UIHandlers): UI {
     const pct = Math.round(Math.max(0, Math.min(1, frac)) * 20) * 5;
     set(`cd-${slot}`, `${pct}:${blocked}`, () => {
       const el = $(`slot-${slot}`);
-      (el.querySelector('.cd') as HTMLElement).style.height = `${pct}%`;
+      (el.querySelector('.cd') as HTMLElement).style.setProperty('--cd', String(pct / 100));
       el.classList.toggle('blocked', blocked);
     });
   }
@@ -371,6 +372,26 @@ export function createUI(game: Game, h: UIHandlers): UI {
   }
 
   return { show, hud };
+}
+
+/**
+ * Molduras pintadas do HUD (UI-003): publica cada imagem como variável CSS (URL absoluta, porque uma
+ * url() relativa numa variável seria resolvida a partir do arquivo de estilo) e liga o modo `hud-art`
+ * só quando todas carregam; sem elas, o HUD simples em CSS continua.
+ */
+function loadHudFrames(): void {
+  const pieces = { orb: art.hudOrb, slot: art.hudSlot, button: art.hudButton, crest: art.hudCrest, bar: art.hudBar, corner: art.hudCorner, divider: art.hudDivider, frame: art.hudFrame };
+  const list = Object.entries(pieces);
+  if (list.some(([, def]) => !def)) return;
+  Promise.all(list.map(([name, def]) => new Promise<void>((resolve, reject) => {
+    const url = new URL(def!.src, document.baseURI).href, img = new Image();
+    img.onload = () => {
+      document.documentElement.style.setProperty(`--hud-${name}`, `url("${url}")`);
+      resolve();
+    };
+    img.onerror = reject;
+    img.src = url;
+  }))).then(() => document.body.classList.add('hud-art'), () => console.warn('Molduras do HUD não carregaram; usando o HUD simples.'));
 }
 
 /** Tile de parede que encosta no piso (o resto da parede não aparece no minimapa). */

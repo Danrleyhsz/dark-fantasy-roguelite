@@ -111,6 +111,86 @@ export const ART = {
       "level"
     ]
   },
+  "hudOrb": {
+    "src": "assets/ui/hud-orb.png",
+    "frameW": 304,
+    "frameH": 279,
+    "anchorX": 152,
+    "anchorY": 139.5,
+    "frames": [
+      "orb"
+    ]
+  },
+  "hudSlot": {
+    "src": "assets/ui/hud-slot.png",
+    "frameW": 160,
+    "frameH": 164,
+    "anchorX": 80,
+    "anchorY": 82,
+    "frames": [
+      "slot"
+    ]
+  },
+  "hudButton": {
+    "src": "assets/ui/hud-button.png",
+    "frameW": 131,
+    "frameH": 132,
+    "anchorX": 65.5,
+    "anchorY": 66,
+    "frames": [
+      "button"
+    ]
+  },
+  "hudCrest": {
+    "src": "assets/ui/hud-crest.png",
+    "frameW": 204,
+    "frameH": 123,
+    "anchorX": 102,
+    "anchorY": 61.5,
+    "frames": [
+      "crest"
+    ]
+  },
+  "hudBar": {
+    "src": "assets/ui/hud-bar.png",
+    "frameW": 644,
+    "frameH": 112,
+    "anchorX": 322,
+    "anchorY": 56,
+    "frames": [
+      "bar"
+    ]
+  },
+  "hudCorner": {
+    "src": "assets/ui/hud-corner.png",
+    "frameW": 126,
+    "frameH": 132,
+    "anchorX": 63,
+    "anchorY": 66,
+    "frames": [
+      "corner"
+    ]
+  },
+  "hudDivider": {
+    "src": "assets/ui/hud-divider.png",
+    "frameW": 484,
+    "frameH": 106,
+    "anchorX": 242,
+    "anchorY": 53,
+    "frames": [
+      "divider"
+    ]
+  },
+  "hudFrame": {
+    "src": "assets/ui/hud-frame.png",
+    "frameW": 324,
+    "frameH": 323,
+    "anchorX": 162,
+    "anchorY": 161.5,
+    "frames": [
+      "frame"
+    ]
+  },
   "fx": {
     "src": "assets/fx/fx.jpg",
     "frameW": 200,

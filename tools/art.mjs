@@ -10,6 +10,7 @@ import { dirname } from 'node:path';
 /**
  * fit 'height': escala única na folha (a pose mais alta mede `size`), âncora nos pés.
  * fit 'box': cada célula cabe num quadrado `size`x`size`, âncora no centro.
+ * fit 'tight': como 'box', mas o quadro fica com a proporção da peça (barras, divisórias).
  */
 const JOBS = [
   // Isométrico: linha de cima de frente (sudeste), linha de baixo de costas (nordeste).
@@ -27,6 +28,15 @@ const JOBS = [
     id: 'icons', src: 'art/raw/iso/icons.jpg', out: 'ui/icons.png', grid: [4, 4], gridLines: true, fit: 'box', size: 96,
     frames: ['vigor', 'reach', 'swift', 'shadowStep', 'lifesteal', 'thorns', 'holyWave', 'deflect', 'ash', 'weapon', 'armor', 'relic', 'attack', 'dodge', 'skill', 'level'],
   },
+  // Molduras do HUD (UI-003): uma peça por célula, cada uma no tamanho em que aparece na tela (x2).
+  { id: 'hudOrb', src: 'art/raw/iso/hud-a.jpg', out: 'ui/hud-orb.png', grid: [4, 2], gridLines: true, cells: [0], frames: ['orb'], fit: 'tight', size: 300 },
+  { id: 'hudSlot', src: 'art/raw/iso/hud-a.jpg', out: 'ui/hud-slot.png', grid: [4, 2], gridLines: true, cells: [1], frames: ['slot'], fit: 'tight', size: 160 },
+  { id: 'hudButton', src: 'art/raw/iso/hud-a.jpg', out: 'ui/hud-button.png', grid: [4, 2], gridLines: true, cells: [2], frames: ['button'], fit: 'tight', size: 128 },
+  { id: 'hudCrest', src: 'art/raw/iso/hud-a.jpg', out: 'ui/hud-crest.png', grid: [4, 2], gridLines: true, cells: [3], frames: ['crest'], fit: 'tight', size: 200 },
+  { id: 'hudBar', src: 'art/raw/iso/hud-a.jpg', out: 'ui/hud-bar.png', grid: [4, 2], gridLines: true, cells: [4], frames: ['bar'], fit: 'tight', size: 640 },
+  { id: 'hudCorner', src: 'art/raw/iso/hud-a.jpg', out: 'ui/hud-corner.png', grid: [4, 2], gridLines: true, cells: [5], frames: ['corner'], fit: 'tight', size: 128 },
+  { id: 'hudDivider', src: 'art/raw/iso/hud-a.jpg', out: 'ui/hud-divider.png', grid: [4, 2], gridLines: true, cells: [6], frames: ['divider'], fit: 'tight', size: 480 },
+  { id: 'hudFrame', src: 'art/raw/iso/hud-a.jpg', out: 'ui/hud-frame.png', grid: [4, 2], gridLines: true, cells: [7], frames: ['frame'], fit: 'tight', size: 320 },
   // Efeitos (FX-003): fundo preto, desenhados com mistura aditiva (preto = nada); sem recorte de cor.
   {
     id: 'fx', additive: true, src: 'art/raw/iso/fx-a.jpg', out: 'fx/fx.jpg', grid: [4, 2], size: 192,
@@ -87,6 +97,9 @@ async function processSheet(job) {
   if (job.fit === 'height') {
     frameW = Math.ceil(Math.max(...frames.map((f) => 2 * Math.max(f.ax - f.x0, f.x0 + f.w - f.ax) * scaleOf(f)))) + 2 * pad;
     frameH = job.size + 2 * pad;
+  } else if (job.fit === 'tight') {
+    frameW = Math.max(...frames.map((f) => Math.round(f.w * scaleOf(f)))) + 2 * pad;
+    frameH = Math.max(...frames.map((f) => Math.round(f.h * scaleOf(f)))) + 2 * pad;
   } else {
     frameW = frameH = job.size + 2 * pad;
   }

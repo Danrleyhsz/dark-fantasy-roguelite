@@ -78,6 +78,7 @@ Leia `docs/VISUAL_DIRECTION_APPROVED.md` antes de escolher a solução de render
 - **Câmera** segue o jogador com suavização e fica presa aos limites da sala. O palco ocupa a tela inteira: em paisagem cabe a vista de referência 960×544, em retrato a escala é pela largura (560 unidades), então os personagens ficam legíveis no celular.
 - **Ordem de desenho:** piso (textura projetada por transformação afim, recortada às lajes) → sombras e áreas de perigo no chão → paredes do fundo (faces norte e oeste texturizadas, com vitrais, brasões e porta) → saque → colunas, braseiros, estátuas, corpos, inimigos e jogador ordenados por `x + y` → projéteis e partículas → muretas baixas ao sul/leste → névoa → luz → ícones, números e vinheta de dano.
 - **Legibilidade:** se algo desenhado depois encobre o jogador, a silhueta dele é redesenhada translúcida por cima.
+- **HUD pintado:** `ui.ts` carrega as oito molduras, publica cada uma como variável CSS (`--hud-orb` etc., URL absoluta) e só então liga `body.hud-art`; as regras em `style.css` põem aro, slot, barras (`border-image` em 9 partes), cantos e divisórias por cima do HUD em HTML. Sem as imagens, o HUD simples continua.
 - **Efeitos pintados:** `drawFx` desenha quadros de `fx/fx.jpg` com mistura aditiva (preto = nada). O corte é recortado ao setor já varrido do golpe, então o rastro pintado coincide com a área que acerta. Sem a imagem, cada efeito volta ao desenho em código.
 - **Luz:** canvas de escuridão em meia resolução com "furos" radiais (jogador, braseiros, candelabros, projéteis, saque, porta aberta e chefe) e brilho aditivo âmbar nas chamas.
 
@@ -102,7 +103,7 @@ Implementado:
 - Luz em meia resolução.
 - DPR limitado a 2.
 - HUD escreve no DOM só quando o valor muda; o minimapa tem a camada da sala em cache.
-- Arte em PNG com paleta e JPEG: ~1,1 MB no total. JS de 66 KB (25 KB com gzip), CSS de 10 KB.
+- Arte em PNG com paleta e JPEG: ~1,2 MB no total. JS de 72 KB (27 KB com gzip), CSS de 14 KB.
 
 Próximos passos se o desempenho cair em celulares fracos:
 1. Pré-renderizar piso e paredes do fundo num canvas por sala.

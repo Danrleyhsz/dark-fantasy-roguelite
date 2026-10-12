@@ -27,7 +27,7 @@ Este documento registra os recursos visuais e sonoros do jogo. Atualize-o sempre
 | FX-003 | Golpe e magia | Feedback de combate | Implementado | `fx/fx.jpg`: corte (recortado ao setor que acerta; no Montante com borda de fogo), anel de fogo da Ira Flamejante, brasa do Acólito, penas e onda de impacto do chefe, onda da Lâmina Sagrada, centelhas ao subir de nível. A estocada do Estoque e a borda exata do alcance continuam em código |
 | UI-001 | Ícones de vida e recursos | HUD | Implementado | Orbes de Vida/Fé em CSS + `ui/icons.png` (cinzas, nível) |
 | UI-002 | Ícones de bênçãos, itens e ações | Escolhas, inventário, HUD | Implementado | `ui/icons.png` (16 ícones) |
-| UI-003 | HUD gótico ornamental | Vida, recursos, habilidades | Implementado (CSS) | Molduras douradas, orbes, slots com recarga, XP, minimapa e objetivo em HTML/CSS; sem folha de molduras pintadas |
+| UI-003 | HUD gótico ornamental | Vida, recursos, habilidades | Implementado | Molduras pintadas `ui/hud-*.png`: aro dos orbes (asas e caveira), slots, botão redondo (pausa e botões de toque), barras do chefe e de experiência (pontas de lança), brasão do chefe, cantos de painéis/cartas, divisória dos títulos e moldura do minimapa. O líquido dos orbes, o recarregamento e os textos continuam em HTML/CSS; sem as imagens, o HUD simples em CSS volta sozinho |
 | KEY-001 | Ilustração de capa | Fundo do menu e das telas finais | Implementado | `ui/key-art.jpg` (não é usada como cenário jogável) |
 | SFX-001/SFX-002 | Efeitos sonoros | Golpe, impacto, dano, esquiva, habilidade, saque, nível, porta, vitória/derrota | Implementado (sintetizado) | `src/audio/sfx.ts` (WebAudio, sem arquivos); volume no menu, 0 = mudo |
 | MUS-001 | Música de ambiente | Atmosfera | Pendente | Opcional |
@@ -52,9 +52,10 @@ Caminhos relativos a `public/assets/`.
 | ENV-001b | `environment/wall.jpg` | JPEG 384×384 (21 KB) | `iso/wall-painted.jpg` | Ladrilhável; a moldura entalhada fica na base das paredes |
 | UI-002 | `ui/icons.png` | PNG, 16 × 100×100 (71 KB) | `iso/icons.jpg` | 8 bênçãos, cinzas, arma, armadura, relíquia, golpe, esquiva, habilidade, nível. O ícone do golpe tem um fundo preto pintado; o brilho da Lâmina Sagrada é levemente salmão |
 | KEY-001 | `ui/key-art.jpg` | JPEG 1600×893 (253 KB) | `iso/key-art.jpg` | Fundo do menu, escurecido por CSS |
+| UI-003 | `ui/hud-orb.png`, `hud-slot.png`, `hud-button.png`, `hud-crest.png`, `hud-bar.png`, `hud-corner.png`, `hud-divider.png`, `hud-frame.png` | PNG com paleta, 304×279, 160×164, 131×132, 204×123, 644×112, 126×132, 484×106, 324×323 (~140 KB no total) | `iso/hud-a.jpg` | Uma peça por célula (`fit: tight`). Buracos medidos e registrados no CSS (orbe: 23,4–76,6% × 19–77%; slot: 12,5%; barra: fatias 29,5%/13,5% para `border-image`) |
 | FX-001/FX-003 | `fx/fx.jpg` | JPEG, 8 × 200×200 sobre preto (63 KB) | `iso/fx-a.jpg` | ember, feather, wave, impact, slash, fireRing, shockwave, motes. **Fundo preto, sem recorte:** desenhado com mistura aditiva (preto não soma nada), então não há franja rosada. Geometria do corte e dos anéis medida no quadro e registrada em `render.ts` (FX_SLASH, FX_RING, FX_SHOCK) |
 
-Total servido: ~1,1 MB de arte (1,04 MiB).
+Total servido: ~1,2 MB de arte (1,18 MiB).
 
 **Removidos (substituídos pela direção isométrica pintada):** sprites e texturas de traço chapado da primeira versão (`player.png`, Penitente antigo, piso/parede/props antigos). As fontes antigas continuam no histórico do git.
 

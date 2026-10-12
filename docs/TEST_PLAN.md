@@ -60,7 +60,7 @@ Marcar um item como concluído somente depois de executá-lo. Registrar navegado
 
 ## 7. Build e publicação
 - [x] Executar os scripts de lint/teste/build existentes. *`npm test`, `npm run check`, `npm run build`. Não há linter configurado.*
-- [x] Confirmar que a build de produção termina sem erros. *JS 66 KB (25 KB gzip), CSS 10 KB, 1,1 MB com a arte.*
+- [x] Confirmar que a build de produção termina sem erros. *JS 72 KB (27 KB gzip), CSS 14 KB, 1,2 MB com a arte.*
 - [x] Testar a versão compilada, não apenas o servidor de desenvolvimento. *Incursão completa pelo fluxo real, pausa, saque, opções e derrota na build.*
 - [x] Se publicado, abrir a URL HTTPS e verificar carregamento de assets e controles. *https://danrleyhsz.github.io/dark-fantasy-roguelite/: 12 assets com HTTP 200, arte de capa no menu, teclado e mouse em desktop, toque em emulação 375×812 (12/10/2026).*
 
