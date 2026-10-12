@@ -63,8 +63,18 @@ export function inDanger(d: Danger, x: number, y: number, r: number): boolean {
   }
 }
 
+/** Dano do ataque já escalado pela profundidade da sala. */
+function scaled(w: World, dmg: number): number {
+  return Math.round(dmg * (1 + CONFIG.run.damagePerDepth * w.depth));
+}
+
 export function updateEnemy(w: World, e: Enemy, dt: number): void {
   const def = CONFIG.enemies[e.kind], p = w.player;
+  if (e.spawn > 0) {
+    e.spawn = Math.max(0, e.spawn - dt); // surgindo: parado e intocável
+    e.face = Math.atan2(p.y - e.y, p.x - e.x);
+    return;
+  }
   e.t += dt;
   e.flash = Math.max(0, e.flash - dt);
   e.cd = Math.max(0, e.cd - dt);
@@ -121,14 +131,14 @@ export function updateEnemy(w: World, e: Enemy, dt: number): void {
         case 'sweep':
           if (!e.struck && inSector(e.x, e.y, e.aim, atk.reach, atk.arc, p.x, p.y, p.r)) {
             e.struck = true;
-            hurtPlayer(w, atk.damage, e.x, e.y);
+            hurtPlayer(w, scaled(w, atk.damage), e.x, e.y);
           }
           if (e.t >= atk.active) setState(e, 'recover');
           break;
         case 'charge':
           speed = atk.speed;
           dir = e.aim;
-          if (!e.struck && dist <= e.r + p.r + 4 && hurtPlayer(w, atk.damage, e.x, e.y)) e.struck = true;
+          if (!e.struck && dist <= e.r + p.r + 4 && hurtPlayer(w, scaled(w, atk.damage), e.x, e.y)) e.struck = true;
           if (e.t >= atk.duration) setState(e, 'recover');
           break;
         case 'volley':
@@ -172,11 +182,11 @@ function startAct(w: World, e: Enemy, atk: AttackDef): void {
     const n = volleyCount(e, atk.count);
     for (let i = 0; i < n; i++) {
       const a = n > 1 ? e.aim - atk.spread / 2 + (atk.spread * i) / (n - 1) : e.aim;
-      spawnProjectile(w, e.x + Math.cos(a) * e.r, e.y + Math.sin(a) * e.r, a, atk.speed, atk.projectile, atk.damage, true);
+      spawnProjectile(w, e.x + Math.cos(a) * e.r, e.y + Math.sin(a) * e.r, a, atk.speed, atk.projectile, scaled(w, atk.damage), true);
     }
   } else if (atk.kind === 'slam') {
     const p = w.player;
-    if (Math.hypot(p.x - e.x, p.y - e.y) <= atk.radius + p.r) hurtPlayer(w, atk.damage, e.x, e.y);
+    if (Math.hypot(p.x - e.x, p.y - e.y) <= atk.radius + p.r) hurtPlayer(w, scaled(w, atk.damage), e.x, e.y);
     w.shake = Math.max(w.shake, 7);
     burst(w, e.x, e.y, 0, 24, 'spark', Math.PI * 2);
   }

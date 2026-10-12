@@ -86,6 +86,8 @@ export interface Enemy {
   lastSwing: number;
   /** Última esquiva (Passo Sombrio) que acertou. */
   lastDodge: number;
+  /** Tempo restante surgindo (onda nova): inativo e intocável. */
+  spawn: number;
 }
 
 export type ProjectileKind = 'ember' | 'feather' | 'wave';
@@ -144,6 +146,8 @@ export interface World {
   runAshes: number;
   /** Abates já recompensados (conta para o Cálice de Sangue). */
   rewarded: number;
+  /** Ondas que ainda vão surgir nesta sala. */
+  waves: EnemyKind[][];
 }
 
 const P = CONFIG.player;
@@ -172,6 +176,7 @@ function emptyWorld(room: Room, seed: number, totalRooms: number, meta: MetaLeve
     stats: { kills: 0, damageTaken: 0, roomsCleared: 0, xpGained: 0, levelsGained: 0 },
     runAshes: 0,
     rewarded: 0,
+    waves: [],
   };
 }
 
@@ -189,12 +194,13 @@ export function createRun(seed: number, meta: MetaLevels = NO_META, hero: Hero =
   return w;
 }
 
-export function spawnEnemy(w: World, kind: EnemyKind, at: Point): Enemy {
-  const d = CONFIG.enemies[kind];
+/** Cria um inimigo; vida escala com a profundidade da sala. `spawn` > 0 = surgindo de uma onda. */
+export function spawnEnemy(w: World, kind: EnemyKind, at: Point, spawn = 0): Enemy {
+  const d = CONFIG.enemies[kind], hp = Math.round(d.hp * (1 + CONFIG.run.hpPerDepth * w.depth));
   const e: Enemy = {
-    id: w.nextId++, kind, x: at.x, y: at.y, r: d.radius, vx: 0, vy: 0, hp: d.hp, maxHp: d.hp,
-    state: d.boss ? 'chase' : 'idle', t: 0, face: Math.PI / 2, aim: 0, moving: false,
-    attack: 0, next: 0, cd: d.boss ? 1 : 0, phase: 1, struck: false, flash: 0, lastSwing: -1, lastDodge: -1,
+    id: w.nextId++, kind, x: at.x, y: at.y, r: d.radius, vx: 0, vy: 0, hp, maxHp: hp,
+    state: d.boss || spawn > 0 ? 'chase' : 'idle', t: 0, face: Math.PI / 2, aim: 0, moving: false,
+    attack: 0, next: 0, cd: d.boss ? 1 : 0, phase: 1, struck: false, flash: 0, lastSwing: -1, lastDodge: -1, spawn,
   };
   w.enemies.push(e);
   return e;
@@ -253,9 +259,22 @@ export function enterRoom(w: World, depth: number): void {
   p.dodge = 0;
   p.face = -Math.PI / 2;
   const options = CONFIG.run.encounters[depth];
-  const kinds = options[Math.floor(w.rng() * options.length)];
+  const waves = options[Math.floor(w.rng() * options.length)].map((wave) => wave.slice());
   const spots = shuffle(room.enemySpawns.slice(), w.rng);
-  kinds.forEach((kind, i) => spawnEnemy(w, kind, spots[i % spots.length]));
+  waves[0].forEach((kind, i) => spawnEnemy(w, kind, spots[i % spots.length]));
+  w.waves = waves.slice(1);
+}
+
+/** Próxima onda: surge nos pontos mais longe do jogador, com aviso. */
+function spawnWave(w: World): void {
+  const p = w.player, kinds = w.waves.shift()!;
+  const spots = w.room.enemySpawns.slice().sort((a, b) => Math.hypot(b.x - p.x, b.y - p.y) - Math.hypot(a.x - p.x, a.y - p.y));
+  kinds.forEach((kind, i) => {
+    const at = spots[i % Math.max(1, Math.min(spots.length, 4))];
+    spawnEnemy(w, kind, at, CONFIG.run.spawnTime);
+    burst(w, at.x, at.y, -Math.PI / 2, 16, 'blood', Math.PI * 2);
+  });
+  floater(w, p.x, p.y, 'Uma nova onda surge!', 'info', 100);
 }
 
 function shuffle<T>(list: T[], rng: () => number): T[] {
@@ -337,7 +356,9 @@ export function stepWorld(w: World, input: InputState, dt: number): void {
   const near = w.loot.find((l) => Math.hypot(l.x - p.x, l.y - p.y) <= CONFIG.pickupRadius + p.r);
   if (near && p.hp > 0) pickUp(w, near);
 
-  if (w.phase === 'fight' && w.enemies.length === 0 && !w.outcome) {
+  if (w.phase === 'fight' && w.enemies.length === 0 && w.waves.length && !w.outcome) {
+    spawnWave(w);
+  } else if (w.phase === 'fight' && w.enemies.length === 0 && !w.outcome) {
     w.stats.roomsCleared++;
     w.projectiles = [];
     if (w.depth >= w.totalRooms - 1) {

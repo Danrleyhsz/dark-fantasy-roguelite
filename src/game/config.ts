@@ -53,7 +53,7 @@ const ENEMIES: Record<EnemyKind, EnemyDef> = {
     attacks: [{ kind: 'charge', range: 280, windup: 0.85, speed: 430, duration: 0.75, recover: 0.8, stun: 1.6, damage: 25 }],
   },
   angel: {
-    name: 'Anjo Caído', hp: 420, radius: 22, speed: 70, aggroRange: 9999, keepAway: 120, knockback: 0.15, stagger: 0, cooldown: 0.7, boss: true,
+    name: 'Anjo Caído', hp: 600, radius: 22, speed: 70, aggroRange: 9999, keepAway: 120, knockback: 0.15, stagger: 0, cooldown: 0.7, boss: true,
     xp: 150, drop: 1, dropMin: 2,
     attacks: [
       { kind: 'charge', range: 340, windup: 0.75, speed: 620, duration: 0.45, recover: 0.6, stun: 1.2, damage: 25 },
@@ -135,14 +135,31 @@ export const CONFIG = {
   bossPhase2Speed: 1.25,
 
   run: {
-    /** Composições possíveis por sala; a última sala é o chefe. */
+    /**
+     * Por sala: opções de encontro; cada encontro é uma sequência de ondas (a próxima surge quando
+     * a anterior cai). A última sala é o chefe.
+     */
     encounters: [
-      [['penitent', 'penitent'], ['penitent', 'acolyte']],
-      [['penitent', 'penitent', 'acolyte'], ['penitent', 'acolyte', 'acolyte']],
-      [['brute', 'penitent'], ['brute', 'acolyte', 'penitent']],
-      [['brute', 'acolyte', 'acolyte', 'penitent'], ['brute', 'brute', 'acolyte'], ['brute', 'penitent', 'penitent', 'acolyte']],
-      [['angel']],
-    ] as EnemyKind[][][],
+      [[['penitent', 'penitent']], [['penitent', 'acolyte']]],
+      [
+        [['penitent', 'penitent', 'acolyte'], ['penitent', 'acolyte']],
+        [['penitent', 'acolyte', 'acolyte'], ['penitent', 'penitent']],
+      ],
+      [
+        [['brute', 'penitent'], ['acolyte', 'acolyte', 'penitent']],
+        [['brute', 'acolyte', 'penitent'], ['penitent', 'penitent', 'acolyte']],
+      ],
+      [
+        [['brute', 'acolyte', 'acolyte', 'penitent'], ['brute', 'penitent', 'penitent']],
+        [['brute', 'brute', 'acolyte'], ['acolyte', 'acolyte', 'penitent', 'penitent']],
+      ],
+      [[['angel']]],
+    ] as EnemyKind[][][][],
+    /** Escala por sala de profundidade: vida e dano dos inimigos. */
+    hpPerDepth: 0.12,
+    damagePerDepth: 0.08,
+    /** Tempo de surgimento de uma onda (inimigo inativo e intocável, com aviso visual). */
+    spawnTime: 0.7,
     /** Cinzas (moeda permanente) ganhas na incursão. */
     ashesPerKill: 1,
     ashesPerRoom: 5,

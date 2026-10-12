@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { hurtPlayer } from '../src/game/combat.ts';
+import { damageEnemy, hurtPlayer } from '../src/game/combat.ts';
 import { CONFIG } from '../src/game/config.ts';
 import { ashesFor, buyMeta, createGame, pickReward, quitToMenu, setPaused, startRun, updateGame } from '../src/game/game.ts';
 import { META } from '../src/game/upgrades.ts';
@@ -86,16 +86,43 @@ test('a porta só abre depois de escolher a bênção', () => {
   assert.equal(atDoor(w), false);
 });
 
-test('incursão completa: o bot atravessa as salas e derrota o chefe', () => {
-  for (const seed of [11, 23, 42]) {
+test('incursão completa é vencível e nenhuma incursão trava', () => {
+  let wins = 0;
+  for (const seed of [11, 23, 42, 77, 101]) {
     const g = createGame();
     startRun(g, seed);
-    playRun(g, 600);
-    assert.equal(g.screen, 'victory', `semente ${seed} terminou em ${g.screen} na sala ${(g.world?.depth ?? 0) + 1}`);
-    assert.equal(g.world!.stats.roomsCleared, CONFIG.run.encounters.length);
-    assert.ok(g.result?.victory);
-    assert.equal(g.save.best.wins, 1);
+    playRun(g, 900);
+    assert.ok(g.screen === 'victory' || g.screen === 'defeat', `semente ${seed} travou em ${g.screen} na sala ${(g.world?.depth ?? 0) + 1}`);
+    assert.ok(g.world!.depth >= 1, `semente ${seed} nem passou da primeira sala`);
+    if (g.screen === 'victory') {
+      wins++;
+      assert.equal(g.world!.stats.roomsCleared, CONFIG.run.encounters.length);
+      assert.ok(g.result?.victory);
+      assert.equal(g.save.best.wins, 1);
+    }
   }
+  // O bot reage com perfeição: se ele perde muito, o jogo ficou injusto; se nunca perde, ficou trivial demais.
+  assert.ok(wins >= 3, `bot venceu só ${wins} de 5`);
+});
+
+test('ondas: a segunda leva surge quando a primeira cai, intocável enquanto surge', () => {
+  const g = createGame();
+  startRun(g, 9);
+  const w = g.world!;
+  tick(g, 60, fighter);
+  if (g.screen === 'reward') pickReward(g, w.offer![0]);
+  for (let t = 0; t < 15 && w.depth === 0; t += STEP) updateGame(g, toDoor(w), STEP);
+  assert.equal(w.depth, 1);
+  assert.ok(w.waves.length >= 1, 'a sala 2 devia ter uma segunda onda');
+  const firstWave = w.enemies.length;
+  for (const e of w.enemies) e.hp = 0; // derruba a primeira onda
+  tick(g, 0.2);
+  assert.ok(w.enemies.length > 0 && w.enemies.every((e) => e.spawn > 0), 'a nova onda devia estar surgindo');
+  assert.equal(w.phase, 'fight');
+  const e = w.enemies[0], hp = e.hp;
+  damageEnemy(w, e, 999, 0);
+  assert.equal(e.hp, hp, 'inimigo surgindo não pode levar dano');
+  assert.ok(firstWave > 0);
 });
 
 test('reiniciar descarta todo o estado da tentativa anterior', () => {

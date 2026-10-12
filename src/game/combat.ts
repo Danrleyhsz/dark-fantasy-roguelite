@@ -34,7 +34,7 @@ export function spawnProjectile(
 
 /** Aplica dano; a recompensa do abate (experiência, saque) é processada em world.ts. */
 export function damageEnemy(w: World, e: Enemy, dmg: number, dir: number, knock: number = CONFIG.player.attack.knockback, crit = false): void {
-  if (e.hp <= 0) return;
+  if (e.hp <= 0 || e.spawn > 0) return;
   const def = CONFIG.enemies[e.kind];
   e.hp -= dmg;
   e.flash = 0.12;

@@ -25,6 +25,8 @@ interface SheetDef { src: string; frameW: number; frameH: number; anchorX: numbe
 const SHEETS = ART as unknown as Partial<Record<string, SheetDef>>;
 
 const T = CONFIG.tile, VW = CONFIG.view.w, VH = CONFIG.view.h;
+/** Largura de mundo visível em telas em retrato (celular em pé). */
+const PORTRAIT_W = 560;
 /** Altura das paredes do fundo e das muretas da frente (baixas para não esconder a luta). */
 const WALL_H = 104, PARAPET_H = 12, PILLAR_H = 120;
 /** Lado, em unidades de mundo, de uma repetição das texturas de piso e parede. */
@@ -74,7 +76,8 @@ export function createRenderer(ctx: CanvasRenderingContext2D, makeCanvas: MakeCa
   function resize(w: number, h: number): void {
     pw = Math.max(1, Math.round(w));
     ph = Math.max(1, Math.round(h));
-    scale = Math.min(pw / VW, ph / VH);
+    // Paisagem: cabe a vista de referência (960x544). Retrato: escala pela largura (mostra mais altura).
+    scale = pw >= ph ? Math.min(pw / VW, ph / VH) : pw / PORTRAIT_W;
     light = hurtShade = null;
   }
 
@@ -186,7 +189,7 @@ export function createRenderer(ctx: CanvasRenderingContext2D, makeCanvas: MakeCa
       camY += (ty - camY) * a;
     }
     camTime = w.time;
-    const hw = VW / 2, hh = VH / 2, b = g.bounds;
+    const hw = pw / scale / 2, hh = ph / scale / 2, b = g.bounds;
     camX = b.x1 - b.x0 <= 2 * hw ? (b.x0 + b.x1) / 2 : Math.min(b.x1 - hw, Math.max(b.x0 + hw, camX));
     camY = b.y1 - b.y0 <= 2 * hh ? (b.y0 + b.y1) / 2 : Math.min(b.y1 - hh, Math.max(b.y0 + hh, camY));
   }
@@ -610,7 +613,15 @@ export function createRenderer(ctx: CanvasRenderingContext2D, makeCanvas: MakeCa
       case 'stun': tilt = Math.sin(w.time * 6) * 0.08; break;
     }
     const flash = e.flash > 0 ? e.flash / 0.12 : 0;
+    // Surgindo de uma onda: sobe do chão em silhueta vermelha (aviso antes de poder agir).
+    const rising = e.spawn > 0 ? e.spawn / CONFIG.run.spawnTime : 0;
+    if (rising > 0) {
+      ctx.globalAlpha = 1 - rising * 0.7;
+      lift -= rising * 30;
+      glow = 1;
+    }
     const drawn = drawSprite(e.kind, frame, x, e.y, flip, lift, tilt, squash, flash > 0 ? THEME.ivory : THEME.blood, flash > 0 ? flash : glow);
+    ctx.globalAlpha = 1;
     if (!drawn) drawPlaceholder(x, e.y, e.r, e.kind === 'angel' ? THEME.gold : THEME.bone, flash);
     if (e.state === 'stun') drawStunStars(e, w.time);
   }

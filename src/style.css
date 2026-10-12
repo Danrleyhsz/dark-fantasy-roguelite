@@ -1,7 +1,6 @@
 /* Cores vêm de src/rendering/theme.ts (publicadas como variáveis CSS em main.ts). */
 :root {
   color-scheme: dark;
-  --view-ratio: calc(960 / 544);
 }
 
 * { box-sizing: border-box; }
@@ -29,10 +28,9 @@ body {
 [hidden] { display: none !important; }
 
 #stage {
-  position: relative;
-  width: min(100vw, calc(100vh * var(--view-ratio)));
-  width: min(100vw, calc(100dvh * var(--view-ratio)));
-  aspect-ratio: 960 / 544;
+  /* Tela inteira: a câmera isométrica mostra mais ou menos mundo conforme a proporção. */
+  position: fixed;
+  inset: 0;
 }
 
 #game {
@@ -351,4 +349,10 @@ body.touch[data-screen='playing'] #touch { display: block; }
     linear-gradient(180deg, rgba(10, 9, 8, 0.55), rgba(10, 9, 8, 0.82) 55%, rgba(10, 9, 8, 0.94)),
     var(--key-art, none) center / cover no-repeat,
     var(--charcoal);
+}
+
+/* Telas estreitas (celular em pé): dica e barra do chefe descem para não cobrir objetivo e minimapa. */
+@media (max-width: 720px) {
+  .hud-top-center { top: calc(var(--hud-pad) + clamp(84px, 24vw, 120px)); width: 92%; }
+  .hud-top-left { max-width: 52%; }
 }
