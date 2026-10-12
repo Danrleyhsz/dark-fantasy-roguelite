@@ -78,8 +78,13 @@ export interface Enemy {
 export type ProjectileKind = 'ember' | 'feather' | 'wave';
 export interface Projectile { x: number; y: number; vx: number; vy: number; r: number; life: number; damage: number; kind: ProjectileKind; hostile: boolean }
 
-export type ParticleKind = 'spark' | 'bone' | 'blood' | 'holy';
-export interface Particle { x: number; y: number; vx: number; vy: number; life: number; max: number; size: number; kind: ParticleKind }
+export type ParticleKind = 'spark' | 'bone' | 'blood' | 'holy' | 'ember';
+/** z = altura acima do chão; faíscas caem e ficam no chão, brasas sobem. */
+export interface Particle { x: number; y: number; z: number; vx: number; vy: number; vz: number; life: number; max: number; size: number; kind: ParticleKind }
+export type FloaterKind = 'dmg' | 'crit' | 'heal' | 'hurt' | 'info';
+/** Número/texto flutuante (dano, cura, nível) que sobe e some. */
+export interface Floater { x: number; y: number; z: number; text: string; t: number; kind: FloaterKind }
+export const FLOATER_TIME = 0.9;
 /** Inimigo derrotado, mantido só para a animação de morte. */
 export interface Corpse { kind: EnemyKind; x: number; y: number; r: number; face: number; t: number }
 
@@ -103,6 +108,7 @@ export interface World {
   projectiles: Projectile[];
   particles: Particle[];
   corpses: Corpse[];
+  floaters: Floater[];
   time: number;
   hitstop: number;
   shake: number;
@@ -139,7 +145,7 @@ function emptyWorld(room: Room, seed: number, totalRooms: number, meta: MetaLeve
   return {
     room, depth: 0, totalRooms, phase: 'fight', phaseTimer: 0, offer: null, upgrades: [],
     player: createPlayer(room.playerSpawn, meta),
-    enemies: [], projectiles: [], particles: [], corpses: [],
+    enemies: [], projectiles: [], particles: [], corpses: [], floaters: [],
     time: 0, hitstop: 0, shake: 0, outcome: null, outcomeTimer: 0,
     rng: mulberry32(seed), serial: 0, nextId: 1,
     flowDist: new Int16Array(cells), flowQueue: new Int32Array(cells), flowTile: -1,
@@ -185,6 +191,7 @@ function enterRoom(w: World, depth: number): void {
   w.projectiles = [];
   w.particles = [];
   w.corpses = [];
+  w.floaters = [];
   w.flowTile = -1;
   const p = w.player;
   p.x = room.playerSpawn.x;
@@ -426,6 +433,18 @@ function damp(b: { vx: number; vy: number }, dt: number): void {
 function updateParticles(w: World, dt: number): void {
   for (const c of w.corpses) c.t += dt;
   if (w.corpses.length && w.corpses[0].t >= CORPSE_TIME) w.corpses = w.corpses.filter((c) => c.t < CORPSE_TIME);
+  for (const f of w.floaters) f.t += dt;
+  if (w.floaters.length && w.floaters[0].t >= FLOATER_TIME) w.floaters = w.floaters.filter((f) => f.t < FLOATER_TIME);
+  // Braseiros soltam brasas que sobem (atmosfera; deixam espaço para as partículas de combate).
+  for (const b of w.room.braziers) {
+    if (w.particles.length < CONFIG.maxParticles - 40 && w.rng() < dt * 7) {
+      const life = 1.2 + w.rng() * 1.2;
+      w.particles.push({
+        x: b.x + (w.rng() - 0.5) * 14, y: b.y + (w.rng() - 0.5) * 14, z: 46, vx: (w.rng() - 0.5) * 18, vy: (w.rng() - 0.5) * 18,
+        vz: 30 + w.rng() * 40, life, max: life, size: 1.5 + w.rng() * 1.5, kind: 'ember',
+      });
+    }
+  }
   const k = Math.exp(-5 * dt);
   for (let i = w.particles.length - 1; i >= 0; i--) {
     const q = w.particles[i];
@@ -436,7 +455,19 @@ function updateParticles(w: World, dt: number): void {
     }
     q.x += q.vx * dt;
     q.y += q.vy * dt;
-    q.vx *= k;
-    q.vy *= k;
+    q.z += q.vz * dt;
+    if (q.kind === 'ember') {
+      q.vz += 10 * dt;
+    } else {
+      q.vz -= 420 * dt;
+      if (q.z <= 0) {
+        q.z = 0;
+        q.vz = 0;
+        q.vx *= 0.5;
+        q.vy *= 0.5;
+      }
+      q.vx *= k;
+      q.vy *= k;
+    }
   }
 }

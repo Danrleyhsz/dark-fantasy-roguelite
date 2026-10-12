@@ -35,7 +35,7 @@ const game = createGame(storage);
 const backdrop = createWorld(FIRST_ROOM, 1); // cena parada atrás do menu
 const input = createInput(canvas, (clientX, clientY) => {
   const r = canvas.getBoundingClientRect();
-  return { x: ((clientX - r.left) / r.width) * CONFIG.view.w, y: ((clientY - r.top) / r.height) * CONFIG.view.h };
+  return renderer.toWorld(((clientX - r.left) * canvas.width) / r.width, ((clientY - r.top) * canvas.height) / r.height);
 });
 const images = await loadImages();
 const renderer = createRenderer(ctx, (w, h) => Object.assign(document.createElement('canvas'), { width: w, height: h }), images, game.save.settings);

@@ -12,6 +12,8 @@ import { dirname } from 'node:path';
  * fit 'box': cada célula cabe num quadrado `size`x`size`, âncora no centro.
  */
 const JOBS = [
+  // Isométrico: linha de cima de frente (sudeste), linha de baixo de costas (nordeste).
+  { id: 'hero', src: 'art/raw/iso/hero-sheet.jpg', out: 'characters/hero.png', grid: [4, 2], gridLines: true, frames: ['idleF', 'runF', 'slashF', 'dodgeF', 'idleB', 'runB', 'slashB', 'dodgeB'], fit: 'height', size: 224 },
   { id: 'player', src: 'art/raw/player-knight-sheet.jpg', out: 'characters/player.png', grid: [2, 2], frames: ['idle', 'run', 'slash', 'dodge'], fit: 'height', size: 192 },
   { id: 'penitent', src: 'art/raw/penitent-sheet.jpg', out: 'enemies/penitent.png', grid: [2, 2], frames: ['pray', 'walk', 'windup', 'attack'], fit: 'height', size: 192 },
   // Props altos: no modo 'box' todos ocupam a altura inteira da célula (base alinhada embaixo).
@@ -19,8 +21,8 @@ const JOBS = [
   // Texturas: só redimensionadas (cobrindo o quadro) e comprimidas.
   // Ladrilháveis: 512 px = FLOOR_TILE (256) e 384 px = WALL_TILE (192) px lógicos no render.
   // linear [a, b] = a*v + b: comprime o contraste e clareia as lajes escuras (leitura dos personagens).
-  { id: 'floor', texture: true, src: 'art/raw/floor-tile.jpg', out: 'environment/floor.jpg', width: 512, height: 512, linear: [0.8, 30] },
-  { id: 'wall', texture: true, src: 'art/raw/wall-masonry.jpg', out: 'environment/wall.jpg', width: 384, height: 384 },
+  { id: 'floor', texture: true, src: 'art/raw/iso/floor-painted.jpg', out: 'environment/floor.jpg', width: 512, height: 512, linear: [0.82, 0] },
+  { id: 'wall', texture: true, src: 'art/raw/iso/wall-painted.jpg', out: 'environment/wall.jpg', width: 384, height: 384, linear: [0.85, 0] },
 ];
 
 const ROOT = 'public/assets/';
@@ -44,6 +46,7 @@ async function processSheet(job) {
   const { data, info } = await sharp(job.src).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   const { width: w, height: h } = info;
   keyMagenta(data);
+  if (job.gridLines) removeGridLines(data, w, h);
   const labels = labelComponents(data, w, h);
   const comps = componentStats(labels, w, h);
   const [gx, gy] = job.grid;
@@ -117,6 +120,26 @@ function keyMagenta(d) {
 }
 
 const clamp = (v) => (v < 0 ? 0 : v > 255 ? 255 : Math.round(v));
+
+/**
+ * O Gemini às vezes desenha linhas de grade entre as células (job.gridLines). Uma linha/coluna 90%
+ * opaca não pode ser arte (cada pose ocupa uma célula), então vira fundo, com folga de 4 px.
+ */
+function removeGridLines(d, w, h) {
+  const rows = [], cols = [];
+  for (let y = 0; y < h; y++) {
+    let n = 0;
+    for (let x = 0; x < w; x++) if (d[(y * w + x) * 4 + 3] > 127) n++;
+    if (n > w * 0.9) rows.push(y);
+  }
+  for (let x = 0; x < w; x++) {
+    let n = 0;
+    for (let y = 0; y < h; y++) if (d[(y * w + x) * 4 + 3] > 127) n++;
+    if (n > h * 0.9) cols.push(x);
+  }
+  for (const y0 of rows) for (let y = Math.max(0, y0 - 4); y <= Math.min(h - 1, y0 + 4); y++) for (let x = 0; x < w; x++) d[(y * w + x) * 4 + 3] = 0;
+  for (const x0 of cols) for (let x = Math.max(0, x0 - 4); x <= Math.min(w - 1, x0 + 4); x++) for (let y = 0; y < h; y++) d[(y * w + x) * 4 + 3] = 0;
+}
 
 /** Rotula componentes 4-conexos de pixels opacos (alfa > 127). 0 = fundo. */
 function labelComponents(d, w, h) {

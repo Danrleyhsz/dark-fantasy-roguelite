@@ -1,5 +1,6 @@
 import type { Point } from '../game/room.ts';
 import type { InputState } from '../game/world.ts';
+import { screenDirToWorld } from '../rendering/iso.ts';
 
 const CODES = {
   up: ['KeyW', 'ArrowUp'],
@@ -112,8 +113,10 @@ export function createInput(canvas: HTMLCanvasElement, toWorld: (clientX: number
     let y = sy + (has(CODES.down) ? 1 : 0) - (has(CODES.up) ? 1 : 0);
     const m = Math.hypot(x, y);
     if (m > 1) { x /= m; y /= m; }
-    state.moveX = x;
-    state.moveY = y;
+    // Teclas e joystick indicam direções da tela; o mundo isométrico gira 45°.
+    const d = screenDirToWorld(x, y);
+    state.moveX = d.x;
+    state.moveY = d.y;
   }
 
   function reset(): void {

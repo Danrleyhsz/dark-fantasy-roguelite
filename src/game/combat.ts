@@ -1,5 +1,9 @@
 import { CONFIG } from './config.ts';
-import type { Enemy, EnemyState, ParticleKind, ProjectileKind, World } from './world.ts';
+import type { Enemy, EnemyState, FloaterKind, ParticleKind, ProjectileKind, World } from './world.ts';
+
+export function floater(w: World, x: number, y: number, text: string, kind: FloaterKind, z = 70): void {
+  if (w.floaters.length < 40) w.floaters.push({ x, y, z, text, t: 0, kind });
+}
 
 export function setState(e: Enemy, state: EnemyState): void {
   e.state = state;
@@ -9,8 +13,11 @@ export function setState(e: Enemy, state: EnemyState): void {
 /** Partículas em leque ao redor de `dir` (spread em radianos; TAU = todas as direções). */
 export function burst(w: World, x: number, y: number, dir: number, n: number, kind: ParticleKind, spread = 1.8): void {
   for (let i = 0; i < n && w.particles.length < CONFIG.maxParticles; i++) {
-    const a = dir + (w.rng() - 0.5) * spread, s = 60 + w.rng() * 160, life = 0.25 + w.rng() * 0.35;
-    w.particles.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life, max: life, size: 1.5 + w.rng() * 2.5, kind });
+    const a = dir + (w.rng() - 0.5) * spread, s = 60 + w.rng() * 160, life = 0.35 + w.rng() * 0.5;
+    w.particles.push({
+      x, y, z: 22 + w.rng() * 16, vx: Math.cos(a) * s, vy: Math.sin(a) * s, vz: 40 + w.rng() * 120,
+      life, max: life, size: 1.5 + w.rng() * 2.5, kind,
+    });
   }
 }
 
@@ -30,6 +37,7 @@ export function damageEnemy(w: World, e: Enemy, dmg: number, dir: number, knock:
   const def = CONFIG.enemies[e.kind];
   e.hp -= dmg;
   e.flash = 0.12;
+  floater(w, e.x, e.y, String(dmg), 'dmg', 60 + e.r * 2);
   // Durante preparação/ataque o inimigo não é interrompido: o jogador precisa respeitar o aviso.
   const armored = e.state === 'windup' || e.state === 'act';
   const kb = knock * def.knockback * (armored ? 0.25 : 1);
@@ -59,7 +67,8 @@ export function heal(w: World, amount: number): void {
   const p = w.player;
   if (p.hp <= 0) return;
   p.hp = Math.min(p.maxHp, p.hp + amount);
-  burst(w, p.x, p.y - 20, -Math.PI / 2, 8, 'holy', 1.2);
+  burst(w, p.x, p.y, -Math.PI / 2, 8, 'holy', Math.PI * 2);
+  floater(w, p.x, p.y, `+${amount}`, 'heal');
 }
 
 /** Retorna true se o dano foi aplicado (false durante invulnerabilidade/esquiva). */
@@ -68,6 +77,7 @@ export function hurtPlayer(w: World, dmg: number, fromX: number, fromY: number):
   if (p.invuln > 0 || p.dodge > 0 || p.hp <= 0 || w.outcome) return false;
   p.hp = Math.max(0, p.hp - dmg);
   w.stats.damageTaken += dmg;
+  floater(w, p.x, p.y, `-${dmg}`, 'hurt');
   p.invuln = CONFIG.player.iframes;
   p.flash = 0.25;
   const a = Math.atan2(p.y - fromY, p.x - fromX);

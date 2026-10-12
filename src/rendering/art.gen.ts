@@ -1,5 +1,22 @@
 // Gerado por tools/art.mjs a partir de art/raw. Não editar à mão: rode `npm run art`.
 export const ART = {
+  "hero": {
+    "src": "assets/characters/hero.png",
+    "frameW": 252,
+    "frameH": 228,
+    "anchorX": 126,
+    "anchorY": 226,
+    "frames": [
+      "idleF",
+      "runF",
+      "slashF",
+      "dodgeF",
+      "idleB",
+      "runB",
+      "slashB",
+      "dodgeB"
+    ]
+  },
   "player": {
     "src": "assets/characters/player.png",
     "frameW": 205,

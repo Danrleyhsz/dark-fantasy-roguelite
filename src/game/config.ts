@@ -67,7 +67,7 @@ export const CONFIG = {
   defeatDelay: 1.4,
   /** Pausa entre limpar a sala e oferecer a recompensa. */
   rewardDelay: 0.8,
-  maxParticles: 160,
+  maxParticles: 240,
 
   player: {
     maxHp: 5,

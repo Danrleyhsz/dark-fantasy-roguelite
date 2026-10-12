@@ -1,14 +1,17 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { CONFIG } from '../src/game/config.ts';
+import { hurtPlayer } from '../src/game/combat.ts';
+import { CONFIG, type SweepAttack } from '../src/game/config.ts';
 import { FIRST_ROOM } from '../src/game/rooms.ts';
-import { createWorld, hurtPlayer, stepWorld, type World } from '../src/game/world.ts';
+import { createWorld, stepWorld, type World } from '../src/game/world.ts';
 import { STEP, fighter, idle, run, runUntil } from './helpers.ts';
 
 const PEN = CONFIG.enemies.penitent;
+const SWEEP = PEN.attacks[0] as SweepAttack;
 const ATK = CONFIG.player.attack;
+const P = CONFIG.player;
 
-/** Mundo com o jogador no centro e o Penitente a `gap` px à direita, já em perseguição. */
+/** Mundo com o jogador no centro e o Penitente a `gap` px à direita. */
 function duel(gap: number, state: 'idle' | 'chase' = 'chase'): World {
   const w = createWorld(FIRST_ROOM, 1);
   w.player.x = 480; w.player.y = 300;
@@ -17,13 +20,13 @@ function duel(gap: number, state: 'idle' | 'chase' = 'chase'): World {
   return w;
 }
 
-const attackRight = () => ({ moveX: 0, moveY: 0, attack: true, aimAt: { x: 9999, y: 300 } });
+const attackRight = () => ({ ...idle(), attack: true, aimAt: { x: 9999, y: 300 } });
 
 test('golpe acerta inimigo à frente, uma vez por golpe', () => {
   const w = duel(40, 'idle');
   stepWorld(w, attackRight(), STEP);
   run(w, ATK.windup + ATK.active + ATK.trail + STEP);
-  assert.equal(w.enemies[0].hp, PEN.hp - 1);
+  assert.equal(w.enemies[0].hp, PEN.hp - ATK.damage);
   assert.equal(w.stats.kills, 0);
 });
 
@@ -59,44 +62,69 @@ test('clique durante a recarga fica guardado (buffer) e vira golpe', () => {
 });
 
 test('inimigo prepara (aviso visível) antes de causar dano', () => {
-  const w = duel(PEN.attackRange);
+  const w = duel(SWEEP.range);
   stepWorld(w, idle(), STEP);
   assert.equal(w.enemies[0].state, 'windup');
-  run(w, PEN.windup - 2 * STEP);
-  assert.equal(w.player.hp, CONFIG.player.maxHp, 'dano antes do fim da preparação');
-  run(w, PEN.active + 2 * STEP);
-  assert.equal(w.player.hp, CONFIG.player.maxHp - 1);
+  run(w, SWEEP.windup - 2 * STEP);
+  assert.equal(w.player.hp, w.player.maxHp, 'dano antes do fim da preparação');
+  run(w, SWEEP.active + 2 * STEP);
+  assert.equal(w.player.hp, w.player.maxHp - SWEEP.damage);
 });
 
 test('sair da área de perigo durante a preparação evita o dano', () => {
-  const w = duel(PEN.attackRange);
+  const w = duel(SWEEP.range);
   stepWorld(w, idle(), STEP);
-  run(w, PEN.windup + PEN.active + STEP, { moveX: -1, moveY: 0, attack: false, aimAt: null });
-  assert.equal(w.player.hp, CONFIG.player.maxHp);
+  run(w, SWEEP.windup + SWEEP.active + STEP, { ...idle(), moveX: -1 });
+  assert.equal(w.player.hp, w.player.maxHp);
+});
+
+test('esquivar através do golpe evita o dano (invulnerável durante a esquiva)', () => {
+  const w = duel(SWEEP.range);
+  stepWorld(w, idle(), STEP);
+  run(w, SWEEP.windup - 0.05);
+  stepWorld(w, { ...idle(), moveX: 1, dodge: true }, STEP);
+  run(w, SWEEP.active + 0.1);
+  assert.equal(w.player.hp, w.player.maxHp);
+  assert.ok(w.player.x > 480 + SWEEP.range, 'devia ter atravessado o inimigo');
+});
+
+test('esquiva tem recarga e respeita paredes', () => {
+  const w = duel(400, 'idle');
+  w.player.x = 2 * CONFIG.tile;
+  stepWorld(w, { ...idle(), moveX: -1, dodge: true }, STEP);
+  run(w, P.dodge.duration + STEP);
+  assert.equal(w.player.x, CONFIG.tile + P.radius, 'atravessou a parede');
+  const serial = w.player.dodgeSerial;
+  stepWorld(w, { ...idle(), dodge: true }, STEP);
+  assert.equal(w.player.dodgeSerial, serial, 'esquivou durante a recarga');
+  run(w, P.dodge.cooldown + 0.05);
+  stepWorld(w, { ...idle(), dodge: true }, STEP);
+  run(w, P.dodge.buffer);
+  assert.equal(w.player.dodgeSerial, serial + 1);
 });
 
 test('invulnerabilidade: um evento não tira vida duas vezes', () => {
   const w = duel(300, 'idle');
   hurtPlayer(w, 1, 0, 0);
   hurtPlayer(w, 1, 0, 0);
-  assert.equal(w.player.hp, CONFIG.player.maxHp - 1);
-  run(w, CONFIG.player.iframes - 0.1);
+  assert.equal(w.player.hp, w.player.maxHp - 1);
+  run(w, P.iframes - 0.1);
   hurtPlayer(w, 1, 0, 0);
-  assert.equal(w.player.hp, CONFIG.player.maxHp - 1, 'dano durante a invulnerabilidade');
+  assert.equal(w.player.hp, w.player.maxHp - 1, 'dano durante a invulnerabilidade');
   // O hitstop do impacto congela tudo, inclusive o cronômetro da invulnerabilidade.
   run(w, 0.1 + w.hitstop + 0.1);
   assert.equal(w.player.invuln, 0);
   hurtPlayer(w, 1, 0, 0);
-  assert.equal(w.player.hp, CONFIG.player.maxHp - 2);
+  assert.equal(w.player.hp, w.player.maxHp - 2);
 });
 
 test('vida nunca fica negativa e a derrota encerra a simulação', () => {
   const w = duel(300, 'idle');
-  hurtPlayer(w, 99, 0, 0);
+  hurtPlayer(w, 999, 0, 0);
   assert.equal(w.player.hp, 0);
   assert.equal(w.outcome, 'defeat');
   const enemy = { ...w.enemies[0] };
-  run(w, 3, { moveX: 1, moveY: 0, attack: true, aimAt: null });
+  run(w, 3, { ...idle(), moveX: 1, attack: true });
   assert.equal(w.player.hp, 0);
   assert.equal(w.enemies[0].x, enemy.x, 'inimigo continuou se movendo após a derrota');
 });
@@ -112,8 +140,8 @@ test('bot vence o Penitente sem morrer (combate é vencível)', () => {
 
 test('jogador parado perto do inimigo acaba derrotado (inimigo é ameaça real)', () => {
   const w = duel(150);
-  const t = runUntil(w, 30, (x) => x.outcome !== null, idle);
-  assert.ok(t < 30, 'inimigo não derrotou o jogador parado');
+  const t = runUntil(w, 60, (x) => x.outcome !== null, idle);
+  assert.ok(t < 60, 'inimigo não derrotou o jogador parado');
   assert.equal(w.outcome, 'defeat');
-  assert.equal(w.stats.damageTaken, CONFIG.player.maxHp);
+  assert.ok(w.stats.damageTaken >= w.player.maxHp);
 });

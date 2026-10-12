@@ -1,10 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { hurtPlayer } from '../src/game/combat.ts';
+import { createGame, startRun } from '../src/game/game.ts';
 import { FIRST_ROOM } from '../src/game/rooms.ts';
-import { createWorld, hurtPlayer, stepWorld } from '../src/game/world.ts';
+import { createWorld, stepWorld } from '../src/game/world.ts';
 import { ART } from '../src/rendering/art.gen.ts';
 import { createRenderer, type Images } from '../src/rendering/render.ts';
-import { STEP, fighter, mockCanvas, mockContext } from './helpers.ts';
+import { STEP, fighter, idle, mockCanvas, mockContext, playRun } from './helpers.ts';
 
 /** Desenha cada quadro de uma luta completa; o contexto falso falha com NaN/Infinity. */
 function playAndRender(images: Images): void {
@@ -19,6 +21,15 @@ function playAndRender(images: Images): void {
   hurtPlayer(w, 0, 0, 0);
   r.resize(0, 0); // tamanho degenerado não pode quebrar
   r.draw(w);
+  const p = r.toWorld(640, 360);
+  assert.ok(Number.isFinite(p.x) && Number.isFinite(p.y));
+}
+
+function fakeImages(): Images {
+  const fake = mockCanvas(64, 64) as unknown as CanvasImageSource;
+  const images: Images = {};
+  for (const id of Object.keys(ART)) images[id] = fake;
+  return images;
 }
 
 test('renderiza uma luta inteira sem imagens (desenho provisório)', () => {
@@ -26,21 +37,43 @@ test('renderiza uma luta inteira sem imagens (desenho provisório)', () => {
 });
 
 test('renderiza uma luta inteira com as folhas de sprites', () => {
-  const fake = mockCanvas(64, 64) as unknown as CanvasImageSource;
-  const images: Images = {};
-  for (const id of Object.keys(ART)) images[id] = fake;
-  playAndRender(images);
+  playAndRender(fakeImages());
+});
+
+test('renderiza a incursão inteira (todas as salas, projéteis, chefe) com efeitos reduzidos', () => {
+  const r = createRenderer(mockContext(), mockCanvas, fakeImages(), { reduceMotion: true });
+  r.resize(960, 544);
+  const g = createGame();
+  startRun(g, 42);
+  let frames = 0;
+  const origDraw = r.draw;
+  // Desenha a cada 4 passos para manter o teste rápido.
+  for (let i = 0; i < 400 && g.screen !== 'victory' && g.screen !== 'defeat'; i++) {
+    playRun(g, 4 * STEP);
+    if (g.world) { origDraw(g.world); frames++; }
+  }
+  assert.ok(frames > 100);
 });
 
 test('derrota: animação de queda renderiza', () => {
   const r = createRenderer(mockContext(), mockCanvas, {});
   r.resize(960, 544);
   const w = createWorld(FIRST_ROOM, 1);
-  hurtPlayer(w, 99, 0, 0);
+  hurtPlayer(w, 999, 0, 0);
   for (let i = 0; i < 120; i++) {
-    stepWorld(w, { moveX: 0, moveY: 0, attack: false, aimAt: null }, STEP);
+    stepWorld(w, idle(), STEP);
     r.draw(w);
   }
+});
+
+test('toWorld inverte a câmera: o centro da tela cai perto do jogador', () => {
+  const r = createRenderer(mockContext(), mockCanvas, {});
+  r.resize(960, 544);
+  const w = createWorld(FIRST_ROOM, 1);
+  w.player.x = 480; w.player.y = 300;
+  for (let i = 0; i < 120; i++) r.draw(w);
+  const p = r.toWorld(480, 272);
+  assert.ok(Math.hypot(p.x - w.player.x, p.y - w.player.y) < 80, `centro em ${p.x},${p.y}`);
 });
 
 test('todo arquivo do manifesto de arte existe', async () => {

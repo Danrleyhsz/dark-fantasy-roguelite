@@ -7,22 +7,24 @@ export interface Body { x: number; y: number; r: number }
 export interface Room {
   cols: number;
   rows: number;
-  /** Uma letra por tile: '#' parede, 'o' pilar, '.' piso (marcadores de spawn viram piso). */
+  /** Uma letra por tile: '#' parede, 'o' pilar, 'b' braseiro, '.' piso (marcadores de spawn viram piso). */
   tiles: string[];
   solid: Uint8Array;
   playerSpawn: Point;
   enemySpawns: Point[];
+  /** Centros dos braseiros (fontes de luz e brasas). */
+  braziers: Point[];
 }
 
 const T = CONFIG.tile;
 const EPS = 1e-6;
 
-/** Legenda: '#' parede, 'o' pilar, '.' piso, 'P' início do jogador, 'E' ponto de inimigo. */
+/** Legenda: '#' parede, 'o' pilar, 'b' braseiro, '.' piso, 'P' início do jogador, 'E' ponto de inimigo. */
 export function parseRoom(map: string[]): Room {
   const rows = map.length, cols = map[0].length;
   const solid = new Uint8Array(cols * rows);
   const tiles: string[] = [];
-  const enemySpawns: Point[] = [];
+  const enemySpawns: Point[] = [], braziers: Point[] = [];
   let playerSpawn: Point | null = null;
   for (let ty = 0; ty < rows; ty++) {
     const line = map[ty];
@@ -33,15 +35,16 @@ export function parseRoom(map: string[]): Room {
       const center = { x: (tx + 0.5) * T, y: (ty + 0.5) * T };
       if (ch === 'P') playerSpawn = center;
       else if (ch === 'E') enemySpawns.push(center);
+      else if (ch === 'b') braziers.push(center);
       else if (ch !== '#' && ch !== 'o' && ch !== '.') throw new Error(`Tile desconhecido '${ch}' na sala`);
-      const blocks = ch === '#' || ch === 'o';
+      const blocks = ch === '#' || ch === 'o' || ch === 'b';
       solid[ty * cols + tx] = blocks ? 1 : 0;
       row += blocks ? ch : '.';
     }
     tiles.push(row);
   }
   if (!playerSpawn) throw new Error('Sala sem início do jogador (P)');
-  return { cols, rows, tiles, solid, playerSpawn, enemySpawns };
+  return { cols, rows, tiles, solid, playerSpawn, enemySpawns, braziers };
 }
 
 export function solidAt(room: Room, tx: number, ty: number): boolean {

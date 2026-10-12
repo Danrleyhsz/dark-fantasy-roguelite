@@ -1,16 +1,18 @@
 import { parseRoom } from './room.ts';
 
-// Salas de 30x17 tiles = 960x544 (CONFIG.view). As 3 primeiras linhas são a parede do fundo (vista 3/4),
-// com a porta de saída no centro. Pilares junto às bordas: o centro fica livre (ASSET_MANIFEST ENV-001).
+// Salas de 30x17 tiles. Na vista isométrica as paredes norte (linhas 0-2) e oeste (coluna 0) mostram
+// a face interna; a porta de saída fica no centro da parede norte. Pilares e braseiros ('b', fontes de
+// luz) ficam junto às bordas: o centro fica livre para o combate (ASSET_MANIFEST ENV-001).
 // 'P' = entrada do jogador, 'E' = pontos possíveis de inimigo (o encontro sorteia quais usar).
 
 const WALL = '##############################';
 const OPEN = '#............................#';
+const LIT = '#.......b............b.......#';
 
 /** Sala avulsa da Fase 1: usada no fundo do menu e nos testes de combate. */
 export const FIRST_ROOM = parseRoom([
   WALL, WALL, WALL,
-  OPEN,
+  LIT,
   '#..o......................o..#',
   OPEN, OPEN, OPEN, OPEN,
   '#....P..................E....#',
@@ -23,7 +25,7 @@ export const FIRST_ROOM = parseRoom([
 /** Nave: colunas nos cantos. */
 const NAVE = parseRoom([
   WALL, WALL, WALL,
-  OPEN,
+  LIT,
   '#..o.....E..........E.....o..#',
   OPEN,
   '#....E..................E....#',
@@ -38,7 +40,7 @@ const NAVE = parseRoom([
 /** Corredor: duas fileiras de colunas formando naves laterais. */
 const AISLE = parseRoom([
   WALL, WALL, WALL,
-  OPEN,
+  LIT,
   '#..E........E....E........E..#',
   '#......o..............o......#',
   OPEN,
@@ -55,7 +57,7 @@ const AISLE = parseRoom([
 /** Cripta: blocos de colunas criando nichos nas laterais. */
 const CRYPT = parseRoom([
   WALL, WALL, WALL,
-  OPEN,
+  LIT,
   '#....E.......E....E.......E..#',
   OPEN,
   '#..oo....................oo..#',
@@ -71,14 +73,15 @@ const CRYPT = parseRoom([
   WALL,
 ]);
 
-/** Arena do chefe: aberta, com quatro colunas. */
+/** Arena do chefe: aberta, com quatro colunas e braseiros nos cantos. */
 export const BOSS_ROOM = parseRoom([
   WALL, WALL, WALL,
-  OPEN, OPEN,
+  '#....b..................b....#',
+  OPEN,
   '#..o..........E...........o..#',
   OPEN, OPEN, OPEN, OPEN, OPEN, OPEN, OPEN, OPEN,
   '#..o..........P...........o..#',
-  OPEN,
+  '#....b..................b....#',
   WALL,
 ]);
 
