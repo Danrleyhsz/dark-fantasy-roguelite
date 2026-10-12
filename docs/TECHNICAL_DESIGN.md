@@ -57,19 +57,19 @@ Leia `docs/VISUAL_DIRECTION_APPROVED.md` antes de escolher a solução de render
 |---|---|
 | `npm install` | instala as dependências de desenvolvimento |
 | `npm run dev` | servidor de desenvolvimento em http://localhost:5173 (`?debug` liga atalhos de teste) |
-| `npm test` | 62 testes de lógica, fluxo, RPG, salvamento e renderização (Node) |
+| `npm test` | 73 testes de lógica, fluxo, RPG, armas, salvamento e renderização (Node) |
 | `npm run check` | checagem de tipos (`tsc`) |
 | `npm run build` | checagem de tipos + build de produção em `dist/` |
 | `npm run preview` | serve a build de produção em http://localhost:4173 |
 | `npm run art` | reprocessa `art/raw/iso/` em `public/assets/` e regera `src/rendering/art.gen.ts` |
 | `npm run deploy` | build + publica `dist/` no ramo `gh-pages` (`tools/deploy.mjs`) |
-| `node tools/balance.ts 30` | simula 30 incursões com o bot dos testes e resume a dificuldade |
+| `node tools/balance.ts 30 all` | simula 30 incursões por arma com o bot dos testes e resume a dificuldade |
 
 ### Estrutura real
 - `src/game/` — regras puras, sem DOM: `config.ts` (equilíbrio centralizado), `room.ts`/`rooms.ts` (mapas, colisão, linha de visão, campo de fluxo), `world.ts` (incursão, jogador, salas, ondas, saque, projéteis), `enemies.ts` (IA por dados e áreas de perigo), `combat.ts` (dano, cura, partículas, números), `hero.ts` (atributos derivados, nível), `items.ts` (equipamentos e raridade), `upgrades.ts` (bênçãos e Relicário), `game.ts` (estados de tela e progressão salva).
 - `src/rendering/` — `render.ts` (renderizador isométrico), `iso.ts` (projeção), `theme.ts`, `assets.ts` (carga com fallback), `art.gen.ts` (manifesto gerado).
 - `src/input/input.ts` (teclado, mouse, toque), `src/ui/ui.ts` (menus, HUD, minimapa), `src/audio/sfx.ts` (sons sintetizados), `src/persistence/save.ts` (localStorage validado), `src/main.ts` (laço e ligação).
-- `public/assets/` — arte processada. `art/raw/iso/` — originais do Gemini. `tools/` — `art.mjs` (pipeline) e `balance.ts` (simulação).
+- `public/assets/` — arte processada. `art/raw/iso/` — originais do Gemini. `tools/` — `art.mjs` (pipeline), `balance.ts` (simulação) e `deploy.mjs` (publicação).
 - `tests/` — `node:test`; `helpers.ts` tem o bot de combate, o piloto de incursão e um contexto 2D falso que falha com NaN.
 
 ### Vista isométrica
@@ -82,8 +82,11 @@ Leia `docs/VISUAL_DIRECTION_APPROVED.md` antes de escolher a solução de render
 
 ### Sistemas de jogo
 - **Incursão:** 5 salas (`CONFIG.run.encounters`). Nas salas 2–4 há duas ondas; a segunda surge longe do jogador, intocável por 0,7 s e com aviso. Vida e dano dos inimigos crescem por sala.
-- **Inimigos por dados:** quatro tipos de ataque reutilizáveis (varredura, investida, rajada e impacto em área) em uma única máquina de estados (`idle → chase → windup → act → recover`, mais `stagger`/`stun`). A mesma geometria de perigo (`dangers()`) aplica o dano, é desenhada no chão e orienta o bot.
-- **RPG:** atributos derivados em uma única função (`deriveStats`) a partir de nível, equipamento, bênçãos e Relicário. Experiência e nível são salvos; equipamento e bênçãos valem só na incursão. Ira Flamejante gasta Fé, o recurso que regenera e sobe a cada golpe.
+- **Inimigos por dados:** quatro tipos de ataque reutilizáveis (varredura, investida, rajada e impacto em área) em uma única máquina de estados (`idle → chase → windup → act → recover`, mais `stagger`/`stun`). A mesma geometria de perigo (`dangers()`) aplica o dano, é desenhada no chão e orienta o bot. Investidas só começam com caminho livre para o corpo inteiro (antes o Flagelante investia contra a coluna à frente em ciclo).
+- **Bot dos testes** (`tests/helpers.ts`): foge das áreas de perigo, sai da linha de projéteis, usa a Ira Flamejante com dois ou mais inimigos perto e contorna obstáculos pelo campo de fluxo. Joga incursões completas nos testes e em `tools/balance.ts`.
+- **Armas:** `CONFIG.weapons` define cada arquétipo (multiplicadores de dano, alcance, recarga e recuo; abertura; tempos do golpe; crítico; Fé por acerto; quebra de guarda; forma do rastro). `deriveStats` aplica a arma; o renderizador desenha arco ou estocada a partir dos mesmos números que acertam.
+- **Colisão:** caixa do corpo contra tiles, em subpassos de meio tile. Raspar uma quina por até 3 unidades desliza o corpo para o lado livre (sem isso, o Flagelante, do tamanho de um tile, travava ao lado de colunas). De frente para a parede o corpo continua parando no mesmo ponto.
+- **RPG:** atributos derivados em uma única função (`deriveStats`) a partir de arma, nível, equipamento, bênçãos e Relicário. Experiência e nível são salvos; equipamento e bênçãos valem só na incursão. Ira Flamejante gasta Fé, o recurso que regenera e sobe a cada golpe.
 - **Telas** (`game.ts`): `menu`, `playing`, `paused`, `reward`, `victory`, `defeat`. Reiniciar cria um mundo novo; os listeners são registrados uma vez.
 - **Salvamento:** chave `dark-fantasy-roguelite/save`, com campos validados e limitados. JSON corrompido ou armazenamento indisponível voltam ao padrão. Falha de escrita mostra um aviso, sem travar.
 - **Áudio:** sons sintetizados com WebAudio a partir das mudanças de estado entre quadros. O áudio é liberado no primeiro gesto e o volume é salvo (0 = mudo).

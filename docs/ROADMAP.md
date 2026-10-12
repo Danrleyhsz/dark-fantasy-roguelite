@@ -53,6 +53,11 @@ A roadmap é incremental. O Claude deve inspecionar o código e marcar apenas ta
 - [x] Atualizar README com instruções reais.
 **Critério de conclusão:** outra pessoa consegue abrir o link e jogar sem instalar nada.
 
+## Depois da publicação: escopo inicial do GDD — 12/10/2026
+- [x] Três arquétipos de arma (GDD, "Escopo inicial"). *Espada Longa, Montante e Estoque, escolhidos no menu e salvos; cada um muda o golpe e a estratégia (Fé, quebra de guarda, alcance). `tests/weapons.test.ts`, balanceamento por arma e captura do rastro de cada um no navegador.*
+- [x] Corrigir o Flagelante preso em ciclo de investida contra colunas. *Achado no balanceamento (uma sala durava 800 s): investida exige caminho livre para o corpo e a colisão desliza em quinas raspadas. Testes em `room.test.ts` e `weapons.test.ts`.*
+- [x] Bot de testes mais próximo de um jogador. *Usa a Ira Flamejante e contorna obstáculos.*
+
 ## Regras de priorização
 Bugs que impedem jogar têm prioridade sobre conteúdo novo. Não começar sistemas complexos, backend ou multiplayer sem necessidade documentada. Cada tarefa concluída deve indicar evidência ou teste executado.
 

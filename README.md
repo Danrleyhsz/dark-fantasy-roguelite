@@ -3,7 +3,7 @@ Dark fantasy roguelite for the browser.
 
 RPG de ação isométrico com estrutura roguelite, em fantasia sombria, que roda direto no navegador (desktop e celular). TypeScript + Vite + Canvas 2D, sem dependências em tempo de execução. A arte foi gerada no Google Gemini e processada por um pipeline próprio.
 
-Um cavaleiro amaldiçoado desce às ruínas de uma catedral, atravessa cinco salas de penitentes, acólitos e flagelantes, escolhe bênçãos que mudam o estilo de luta, coleta equipamentos de raridades variadas e enfrenta o Anjo Caído. Morrer encerra a incursão, mas o nível do herói e as cinzas gastas no Relicário permanecem.
+Um cavaleiro amaldiçoado escolhe a arma (Espada Longa, Montante ou Estoque), desce às ruínas de uma catedral, atravessa cinco salas de penitentes, acólitos e flagelantes, escolhe bênçãos que mudam o estilo de luta, coleta equipamentos de raridades variadas e enfrenta o Anjo Caído. Morrer encerra a incursão, mas o nível do herói e as cinzas gastas no Relicário permanecem.
 
 ## Jogar
 - **Online:** https://danrleyhsz.github.io/dark-fantasy-roguelite/ (GitHub Pages; também no celular).
@@ -26,13 +26,13 @@ npm run dev        # http://localhost:5173
 
 ## Desenvolvimento
 ```bash
-npm test           # 62 testes (lógica, RPG, salvamento, renderização, incursão completa)
+npm test           # 73 testes (lógica, RPG, armas, salvamento, renderização, incursão completa)
 npm run check      # checagem de tipos
 npm run build      # build de produção em dist/
 npm run preview    # serve dist/ em http://localhost:4173
 npm run art        # reprocessa a arte de art/raw/iso/ para public/assets/
 npm run deploy     # build + publica dist/ no ramo gh-pages (GitHub Pages)
-node tools/balance.ts 30   # simula 30 incursões com o bot e resume a dificuldade
+node tools/balance.ts 30 all   # simula 30 incursões por arma com o bot e resume a dificuldade
 ```
 
 Abrir com `?debug` na URL liga atalhos de teste no console (`__debug.room(4)` vai à sala do chefe).

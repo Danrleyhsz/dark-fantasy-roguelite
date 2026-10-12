@@ -1,4 +1,4 @@
-import { CONFIG } from '../game/config.ts';
+import { CONFIG, type WeaponKind } from '../game/config.ts';
 import type { Game, Screen } from '../game/game.ts';
 import { attributesFor, xpToNext } from '../game/hero.ts';
 import { RARITY, describeMods } from '../game/items.ts';
@@ -17,6 +17,7 @@ export interface UIHandlers {
   pause(): void;
   pick(id: UpgradeId): void;
   buy(id: MetaId): void;
+  weapon(kind: WeaponKind): void;
   reduceMotion(on: boolean): void;
   volume(v: number): void;
 }
@@ -96,6 +97,7 @@ export function createUI(game: Game, h: UIHandlers): UI {
     $('record').textContent = s.best.runs
       ? `Incursões: ${s.best.runs} · Vitórias: ${s.best.wins} · Sala mais funda: ${s.best.depth}/${CONFIG.run.encounters.length}`
       : 'Nenhuma incursão ainda.';
+    fillWeapons();
     motion.checked = s.settings.reduceMotion;
     volume.value = String(s.settings.volume);
     $('relics').replaceChildren(...(Object.keys(META) as MetaId[]).map((id) => {
@@ -118,17 +120,41 @@ export function createUI(game: Game, h: UIHandlers): UI {
     $('save-warning').hidden = game.saved;
   }
 
-  /** Painel do personagem (pausa): nível, atributos, atributos derivados, equipamento e bênçãos. */
+  /** Escolha da arma (arquétipo) da próxima incursão; a selecionada fica marcada (cor + ✦ + aria-pressed). */
+  function fillWeapons(): void {
+    const list = $('weapon-list');
+    const mark = () => {
+      for (const el of list.children) el.setAttribute('aria-pressed', String((el as HTMLElement).dataset.weapon === game.save.weapon));
+    };
+    list.replaceChildren(...(Object.keys(CONFIG.weapons) as WeaponKind[]).map((kind) => {
+      const def = CONFIG.weapons[kind], b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'weapon';
+      b.dataset.weapon = kind;
+      b.innerHTML = '<b></b><small></small>';
+      b.querySelector('b')!.textContent = def.name;
+      b.querySelector('small')!.textContent = def.text;
+      b.addEventListener('click', () => {
+        h.weapon(kind);
+        mark();
+      });
+      return b;
+    }));
+    mark();
+  }
+
+  /** Painel do personagem (pausa): nível, arma, atributos, atributos derivados, equipamento e bênçãos. */
   function fillCharacter(): void {
     const w = game.world, panel = $('character');
     if (!w) {
       panel.replaceChildren();
       return;
     }
-    const p = w.player, s = p.stats, at = attributesFor(p.level);
+    const p = w.player, s = p.stats, at = attributesFor(p.level), weapon = CONFIG.weapons[p.weapon];
     const row = (label: string, value: string) => `<tr><th>${label}</th><td>${value}</td></tr>`;
     panel.innerHTML = `<h2>Cavaleiro · nível ${p.level}</h2>
       <p class="note">${p.level >= CONFIG.levels.max ? 'Nível máximo' : `${p.xp}/${xpToNext(p.level)} de experiência`}</p>
+      <p class="note"><b>${weapon.name}:</b> ${weapon.text}</p>
       <div class="char-cols">
         <table>${row('Força', String(at.strength))}${row('Vitalidade', String(at.vitality))}${row('Destreza', String(at.dexterity))}</table>
         <table>${row('Dano', s.damage.toFixed(1))}${row('Crítico', `${Math.round(s.critChance * 100)}%`)}${row('Vida', `${p.hp}/${p.maxHp}`)}${row('Armadura', `${Math.round(s.armorPct * 100)}%`)}${row('Golpes/s', (1 / s.cooldown).toFixed(2))}</table>
@@ -184,7 +210,7 @@ export function createUI(game: Game, h: UIHandlers): UI {
     if (!w) return;
     const s = Math.floor(w.time), time = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
     $('end-stats').textContent =
-      `Sala ${w.depth + 1}/${w.totalRooms} · Inimigos ${w.stats.kills} · Dano sofrido ${w.stats.damageTaken} · Nível ${w.player.level}` +
+      `${CONFIG.weapons[w.player.weapon].name} · Sala ${w.depth + 1}/${w.totalRooms} · Inimigos ${w.stats.kills} · Dano sofrido ${w.stats.damageTaken} · Nível ${w.player.level}` +
       `${r?.levelsGained ? ` (+${r.levelsGained})` : ''} · Tempo ${time}`;
     $('end-blessings').replaceChildren(...w.upgrades.map((id) => {
       const li = document.createElement('li');
@@ -219,6 +245,7 @@ export function createUI(game: Game, h: UIHandlers): UI {
   function hud(w: World | null): void {
     if (!w) return;
     const p = w.player, s = p.stats;
+    set('weapon', p.weapon, () => { $('slot-attack').title = `Golpe: ${CONFIG.weapons[p.weapon].name}`; });
     set('hp', `${p.hp}/${p.maxHp}`, () => {
       const pct = `${(p.hp / p.maxHp) * 100}%`;
       $('hp-fill').style.height = pct;

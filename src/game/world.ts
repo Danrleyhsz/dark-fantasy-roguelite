@@ -1,4 +1,4 @@
-import { CONFIG, type EnemyKind } from './config.ts';
+import { CONFIG, type EnemyKind, type WeaponKind } from './config.ts';
 import { burst, damageEnemy, floater, heal, hurtPlayer, spawnProjectile } from './combat.ts';
 import { updateEnemy } from './enemies.ts';
 import { EMPTY_GEAR, deriveStats, xpToNext, type Gear, type PlayerStats } from './hero.ts';
@@ -32,7 +32,9 @@ export interface Player {
   hp: number; maxHp: number;
   face: number;
   moving: boolean;
-  /** Derivado de nível, equipamento, bênçãos e Relicário (hero.ts). */
+  /** Arquétipo escolhido no menu; define o formato e o ritmo do golpe. */
+  weapon: WeaponKind;
+  /** Derivado de arma, nível, equipamento, bênçãos e Relicário (hero.ts). */
   stats: PlayerStats;
   level: number;
   xp: number;
@@ -154,21 +156,21 @@ const P = CONFIG.player;
 
 export interface Hero { level: number; xp: number }
 
-function createPlayer(at: Point, meta: MetaLevels, hero: Hero): Player {
-  const stats = deriveStats(hero.level, EMPTY_GEAR, [], meta);
+function createPlayer(at: Point, meta: MetaLevels, hero: Hero, weapon: WeaponKind): Player {
+  const stats = deriveStats(hero.level, EMPTY_GEAR, [], meta, weapon);
   return {
     x: at.x, y: at.y, r: P.radius, vx: 0, vy: 0, hp: stats.maxHp, maxHp: stats.maxHp, face: -Math.PI / 2, moving: false,
-    stats, level: hero.level, xp: hero.xp, gear: { ...EMPTY_GEAR }, meta, fe: stats.maxFe,
+    weapon, stats, level: hero.level, xp: hero.xp, gear: { ...EMPTY_GEAR }, meta, fe: stats.maxFe,
     swing: null, cooldown: 0, buffer: 0, bufferAim: null, invuln: 0, flash: 0,
     dodge: 0, dodgeCd: 0, dodgeDir: 0, dodgeBuffer: 0, dodgeSerial: 0, skillCd: 0, skillBuffer: 0, spin: 0,
   };
 }
 
-function emptyWorld(room: Room, seed: number, totalRooms: number, meta: MetaLevels, hero: Hero): World {
+function emptyWorld(room: Room, seed: number, totalRooms: number, meta: MetaLevels, hero: Hero, weapon: WeaponKind): World {
   const cells = room.cols * room.rows;
   return {
     room, depth: 0, totalRooms, phase: 'fight', phaseTimer: 0, offer: null, upgrades: [],
-    player: createPlayer(room.playerSpawn, meta, hero),
+    player: createPlayer(room.playerSpawn, meta, hero, weapon),
     enemies: [], projectiles: [], particles: [], corpses: [], floaters: [], loot: [], lastLoot: null,
     time: 0, hitstop: 0, shake: 0, outcome: null, outcomeTimer: 0,
     rng: mulberry32(seed), serial: 0, nextId: 1,
@@ -181,15 +183,15 @@ function emptyWorld(room: Room, seed: number, totalRooms: number, meta: MetaLeve
 }
 
 /** Sala avulsa (vence ao limpar): testes e fundo do menu. Inimigos nos pontos 'E', na ordem. */
-export function createWorld(room: Room, seed: number, kinds: EnemyKind[] = ['penitent']): World {
-  const w = emptyWorld(room, seed, 1, NO_META, { level: 1, xp: 0 });
+export function createWorld(room: Room, seed: number, kinds: EnemyKind[] = ['penitent'], weapon: WeaponKind = 'sword'): World {
+  const w = emptyWorld(room, seed, 1, NO_META, { level: 1, xp: 0 }, weapon);
   room.enemySpawns.forEach((at, i) => spawnEnemy(w, kinds[i % kinds.length], at));
   return w;
 }
 
 /** Incursão completa: salas em sequência (CONFIG.run.encounters) terminando no chefe. */
-export function createRun(seed: number, meta: MetaLevels = NO_META, hero: Hero = { level: 1, xp: 0 }): World {
-  const w = emptyWorld(START_ROOM, seed, CONFIG.run.encounters.length, meta, hero);
+export function createRun(seed: number, meta: MetaLevels = NO_META, hero: Hero = { level: 1, xp: 0 }, weapon: WeaponKind = 'sword'): World {
+  const w = emptyWorld(START_ROOM, seed, CONFIG.run.encounters.length, meta, hero, weapon);
   enterRoom(w, 0);
   return w;
 }
@@ -209,7 +211,7 @@ export function spawnEnemy(w: World, kind: EnemyKind, at: Point, spawn = 0): Ene
 /** Recalcula os atributos; ganhos de vida máxima também curam a diferença. */
 export function recomputeStats(w: World): void {
   const p = w.player;
-  p.stats = deriveStats(p.level, p.gear, w.upgrades, p.meta);
+  p.stats = deriveStats(p.level, p.gear, w.upgrades, p.meta, p.weapon);
   const delta = p.stats.maxHp - p.maxHp;
   p.maxHp = p.stats.maxHp;
   if (delta > 0 && p.hp > 0) p.hp += delta;
@@ -377,7 +379,7 @@ export function stepWorld(w: World, input: InputState, dt: number): void {
 }
 
 function updatePlayer(w: World, input: InputState, dt: number): void {
-  const p = w.player, s = p.stats, a = P.attack;
+  const p = w.player, s = p.stats;
   p.cooldown = Math.max(0, p.cooldown - dt);
   p.invuln = Math.max(0, p.invuln - dt);
   p.flash = Math.max(0, p.flash - dt);
@@ -432,15 +434,15 @@ function updatePlayer(w: World, input: InputState, dt: number): void {
     p.face = Math.atan2(input.moveY, input.moveX);
   }
 
-  const speed = P.speed * (p.swing ? P.swingMoveFactor : 1);
+  const speed = P.speed * (p.swing ? s.moveFactor : 1);
   moveAndCollide(w.room, p, (input.moveX * speed + p.vx) * dt, (input.moveY * speed + p.vy) * dt);
   damp(p, dt);
 
   const sw = p.swing;
   if (sw) {
     sw.t += dt;
-    if (sw.t >= a.windup && sw.t <= a.windup + a.active) swingHits(w, sw);
-    if (sw.t >= a.windup + a.active + a.trail) p.swing = null;
+    if (sw.t >= s.windup && sw.t <= s.windup + s.active) swingHits(w, sw);
+    if (sw.t >= s.windup + s.active + s.trail) p.swing = null;
   }
 }
 
@@ -450,7 +452,7 @@ function rewardKill(w: World, e: Enemy): void {
   w.stats.kills++;
   w.rewarded++;
   gainXp(w, def.xp);
-  if (w.rng() < def.drop) w.loot.push({ x: e.x, y: e.y, item: rollItem(w.rng, w.depth, def.dropMin), t: 0 });
+  if (w.rng() < def.drop) w.loot.push({ x: e.x, y: e.y, item: rollItem(w.rng, w.depth, def.dropMin, w.player.weapon), t: 0 });
   if (w.upgrades.includes('lifesteal') && w.rewarded % CONFIG.lifestealEvery === 0) heal(w, CONFIG.lifestealHeal);
 }
 
@@ -479,8 +481,8 @@ function swingHits(w: World, sw: Swing): void {
     if (e.lastSwing === sw.serial || e.hp <= 0 || !inSector(p.x, p.y, sw.dir, s.range, s.arc, e.x, e.y, e.r)) continue;
     e.lastSwing = sw.serial;
     const crit = w.rng() < s.critChance;
-    damageEnemy(w, e, Math.round(s.damage * (crit ? P.critMult : 1)), sw.dir, P.attack.knockback, crit);
-    p.fe = Math.min(s.maxFe, p.fe + P.fe.perHit);
+    damageEnemy(w, e, Math.round(s.damage * (crit ? P.critMult : 1)), sw.dir, s.knockback, crit, s.breaksGuard);
+    p.fe = Math.min(s.maxFe, p.fe + s.fePerHit);
   }
   // O golpe também rebate (Auréola Partida) ou destrói projéteis inimigos.
   for (let i = w.projectiles.length - 1; i >= 0; i--) {

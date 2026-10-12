@@ -32,15 +32,21 @@ export function spawnProjectile(
   });
 }
 
-/** Aplica dano; a recompensa do abate (experiência, saque) é processada em world.ts. */
-export function damageEnemy(w: World, e: Enemy, dmg: number, dir: number, knock: number = CONFIG.player.attack.knockback, crit = false): void {
+/**
+ * Aplica dano; a recompensa do abate (experiência, saque) é processada em world.ts.
+ * `breakGuard` (Montante): interrompe a preparação de inimigos que cambaleiam.
+ */
+export function damageEnemy(
+  w: World, e: Enemy, dmg: number, dir: number,
+  knock: number = CONFIG.player.attack.knockback, crit = false, breakGuard = false,
+): void {
   if (e.hp <= 0 || e.spawn > 0) return;
   const def = CONFIG.enemies[e.kind];
   e.hp -= dmg;
   e.flash = 0.12;
   floater(w, e.x, e.y, crit ? `${dmg}!` : String(dmg), crit ? 'crit' : 'dmg', 60 + e.r * 2);
   // Durante preparação/ataque o inimigo não é interrompido: o jogador precisa respeitar o aviso.
-  const armored = e.state === 'windup' || e.state === 'act';
+  const armored = (e.state === 'windup' || e.state === 'act') && !(breakGuard && def.stagger > 0);
   const kb = knock * def.knockback * (armored ? 0.25 : 1);
   e.vx += Math.cos(dir) * kb;
   e.vy += Math.sin(dir) * kb;

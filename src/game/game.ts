@@ -1,5 +1,5 @@
 import { loadSave, writeSave, type SaveData, type StorageLike } from '../persistence/save.ts';
-import { CONFIG } from './config.ts';
+import { CONFIG, type WeaponKind } from './config.ts';
 import { META, type MetaId, type UpgradeId } from './upgrades.ts';
 import { chooseUpgrade, createRun, stepWorld, type InputState, type World } from './world.ts';
 
@@ -25,7 +25,7 @@ export function createGame(storage: StorageLike | null = null): Game {
 
 /** Nova incursão: o mundo anterior é descartado inteiro (entidades, timers e efeitos vivem nele). */
 export function startRun(g: Game, seed: number): void {
-  g.world = createRun(seed, g.save.meta, g.save.hero);
+  g.world = createRun(seed, g.save.meta, g.save.hero, g.save.weapon);
   g.result = null;
   g.screen = 'playing';
 }
@@ -87,6 +87,13 @@ export function buyMeta(g: Game, id: MetaId): boolean {
   g.save.meta[id]++;
   g.saved = writeSave(g.storage, g.save);
   return true;
+}
+
+/** Escolhe a arma da próxima incursão (só no menu). */
+export function setWeapon(g: Game, weapon: WeaponKind): void {
+  if (g.screen !== 'menu' || !Object.hasOwn(CONFIG.weapons, weapon)) return;
+  g.save.weapon = weapon;
+  g.saved = writeSave(g.storage, g.save);
 }
 
 export function setReduceMotion(g: Game, on: boolean): void {

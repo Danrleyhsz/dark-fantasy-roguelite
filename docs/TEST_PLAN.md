@@ -3,8 +3,8 @@
 Marcar um item como concluído somente depois de executá-lo. Registrar navegador, dispositivo, passos, resultado esperado e resultado observado quando houver falha.
 
 ## Como os testes foram executados
-- **Automáticos:** `npm test` (62 testes `node:test`, Node 24.18, Windows 11) e `npm run check`. Cobrem colisão, combate, esquiva, os quatro inimigos e o chefe, projéteis, ondas, bênçãos, RPG (níveis, itens, habilidade, armadura), salvamento (dados corrompidos, armazenamento indisponível, falha de escrita), projeção isométrica, telas, reinício e renderização (contexto 2D falso que falha com NaN). Inclui **incursões completas** jogadas por um bot.
-- **Balanceamento:** `node tools/balance.ts 30` → o bot (reação perfeita) vence 27/30, morre nas salas 3–4, termina com ~93% de vida e leva ~2,6 min por incursão.
+- **Automáticos:** `npm test` (73 testes `node:test`, Node 24.18, Windows 11) e `npm run check`. Cobrem colisão (inclusive quinas), combate, esquiva, os quatro inimigos e o chefe, projéteis, ondas, bênçãos, os três arquétipos de arma, RPG (níveis, itens, habilidade, armadura), salvamento (dados corrompidos, armazenamento indisponível, falha de escrita), projeção isométrica, telas, reinício e renderização (contexto 2D falso que falha com NaN). Inclui **incursões completas** jogadas por um bot.
+- **Balanceamento:** `node tools/balance.ts 30 all` → o bot (reação perfeita, usa a Ira e contorna obstáculos) vence 29/30 com a Espada, 27/30 com o Montante e 30/30 com o Estoque; ~1,5–1,8 min por incursão e ~91–93% de vida nas vitórias. Pessoas erram mais que o bot: falta teste com jogadores.
 - **Navegador:** Chromium embutido do app Claude Desktop, servidor de desenvolvimento, **build de produção** (`npm run preview`) e a **versão publicada** no GitHub Pages. Entradas reais do DOM (KeyboardEvent/PointerEvent), cliques nas cartas e botões. Com o painel oculto, os quadros foram avançados por `__debug.frames()` (`?debug`).
 - **Celular:** emulação 375×812 (retrato) e 844×390 (paisagem) com eventos de toque sintéticos. **Nenhum aparelho físico testado.**
 

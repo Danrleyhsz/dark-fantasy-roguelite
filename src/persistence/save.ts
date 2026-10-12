@@ -1,4 +1,4 @@
-import { CONFIG } from '../game/config.ts';
+import { CONFIG, type WeaponKind } from '../game/config.ts';
 import { META, type MetaId, type MetaLevels } from '../game/upgrades.ts';
 
 /** Só o necessário (TECHNICAL_DESIGN): progressão permanente, recordes e configurações. */
@@ -8,6 +8,8 @@ export interface SaveData {
   meta: MetaLevels;
   /** Nível e experiência do herói: a progressão RPG persiste entre incursões. */
   hero: { level: number; xp: number };
+  /** Arma escolhida no menu para a próxima incursão. */
+  weapon: WeaponKind;
   best: { runs: number; wins: number; depth: number };
   settings: { reduceMotion: boolean; volume: number };
 }
@@ -22,6 +24,7 @@ export function defaultSave(): SaveData {
     ashes: 0,
     meta: { vigor: 0, edge: 0, breath: 0 },
     hero: { level: 1, xp: 0 },
+    weapon: 'sword',
     best: { runs: 0, wins: 0, depth: 0 },
     settings: { reduceMotion: false, volume: 0.6 },
   };
@@ -39,13 +42,14 @@ export function loadSave(storage: StorageLike | null): SaveData {
   }
   if (!raw || typeof raw !== 'object') return save;
   const r = raw as {
-    ashes?: unknown; meta?: Record<string, unknown>; hero?: Record<string, unknown>;
+    ashes?: unknown; meta?: Record<string, unknown>; hero?: Record<string, unknown>; weapon?: unknown;
     best?: Record<string, unknown>; settings?: Record<string, unknown>;
   };
   save.ashes = int(r.ashes, 1_000_000);
   for (const id of Object.keys(META) as MetaId[]) save.meta[id] = int(r.meta?.[id], META[id].costs.length);
   save.hero.level = Math.max(1, int(r.hero?.level, CONFIG.levels.max));
   save.hero.xp = int(r.hero?.xp, 1_000_000);
+  if (typeof r.weapon === 'string' && Object.hasOwn(CONFIG.weapons, r.weapon)) save.weapon = r.weapon as WeaponKind;
   save.best.runs = int(r.best?.runs, 1_000_000);
   save.best.wins = Math.min(int(r.best?.wins, 1_000_000), save.best.runs);
   save.best.depth = int(r.best?.depth, 100);

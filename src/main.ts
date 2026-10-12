@@ -1,6 +1,6 @@
 import { createSfx } from './audio/sfx.ts';
 import { CONFIG } from './game/config.ts';
-import { buyMeta, createGame, pickReward, quitToMenu, setPaused, setReduceMotion, setVolume, startRun, updateGame, type Screen } from './game/game.ts';
+import { buyMeta, createGame, pickReward, quitToMenu, setPaused, setReduceMotion, setVolume, setWeapon, startRun, updateGame, type Screen } from './game/game.ts';
 import { FIRST_ROOM } from './game/rooms.ts';
 import { createWorld, enterRoom, type World } from './game/world.ts';
 import { createInput } from './input/input.ts';
@@ -60,6 +60,7 @@ const ui = createUI(game, {
   buy: (id) => {
     if (buyMeta(game, id)) ui.show('menu');
   },
+  weapon: (kind) => setWeapon(game, kind),
   reduceMotion: (on) => setReduceMotion(game, on),
   volume: (v) => {
     setVolume(game, v);

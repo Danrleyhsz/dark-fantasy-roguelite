@@ -9,6 +9,7 @@ import { STEP, fighter, idle, run, runUntil } from './helpers.ts';
 const PEN = CONFIG.enemies.penitent;
 const SWEEP = PEN.attacks[0] as SweepAttack;
 const ATK = CONFIG.player.attack;
+const SWORD = CONFIG.weapons.sword;
 const P = CONFIG.player;
 
 /** Mundo com o jogador no centro e o Penitente a `gap` px à direita. */
@@ -26,7 +27,7 @@ const attackRight = () => ({ ...idle(), attack: true, aimAt: { x: 9999, y: 300 }
 test('golpe acerta inimigo à frente, uma vez por golpe', () => {
   const w = duel(40, 'idle');
   stepWorld(w, attackRight(), STEP);
-  run(w, ATK.windup + ATK.active + ATK.trail + STEP);
+  run(w, SWORD.windup + SWORD.active + SWORD.trail + STEP);
   assert.equal(w.enemies[0].hp, PEN.hp - ATK.damage);
   assert.equal(w.stats.kills, 0);
 });

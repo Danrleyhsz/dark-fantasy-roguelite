@@ -748,26 +748,51 @@ export function createRenderer(ctx: CanvasRenderingContext2D, makeCanvas: MakeCa
     ctx.fillRect(x - 1, y + s * 0.3, 2, 2);
   }
 
-  /** Arco do golpe no chão: mostra exatamente o alcance e a abertura que acertam. */
+  /** Rastro do golpe no chão: mostra exatamente o alcance e a abertura que acertam, no formato da arma. */
   function drawSlash(p: Player): void {
-    const s = p.swing!, a = CONFIG.player.attack, range = p.stats.range, arc = p.stats.arc;
-    const sweep = Math.min(1, s.t / (a.windup + a.active));
-    const fade = s.t > a.windup + a.active ? 1 - (s.t - a.windup - a.active) / a.trail : 1;
-    const start = s.dir - arc / 2, end = start + arc * sweep;
+    const s = p.swing!, st = p.stats, range = st.range, hitEnd = st.windup + st.active;
+    const sweep = Math.min(1, s.t / hitEnd);
+    const fade = Math.max(0, s.t > hitEnd ? 1 - (s.t - hitEnd) / st.trail : 1);
     ctx.save();
     ctx.lineCap = 'round';
     ctx.globalCompositeOperation = 'lighter';
-    ctx.globalAlpha = 0.9 * Math.max(0, fade);
-    ctx.strokeStyle = 'rgba(255,214,140,0.9)';
-    ctx.lineWidth = 9;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, range - 10, start, end);
-    ctx.stroke();
-    ctx.strokeStyle = THEME.ivory;
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, range - 3, start, end);
-    ctx.stroke();
+    ctx.globalAlpha = 0.9 * fade;
+    if (CONFIG.weapons[st.weapon].shape === 'thrust') {
+      // Estoque: lâmina de luz que avança em linha até a ponta do alcance.
+      const len = range * (0.3 + 0.7 * sweep), c = Math.cos(s.dir), n = Math.sin(s.dir), hw = 8;
+      ctx.strokeStyle = 'rgba(255,170,90,0.45)';
+      ctx.lineWidth = 14;
+      ctx.beginPath();
+      ctx.moveTo(p.x + c * 10, p.y + n * 10);
+      ctx.lineTo(p.x + c * len, p.y + n * len);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(255,214,140,0.85)';
+      ctx.beginPath();
+      ctx.moveTo(p.x - n * hw, p.y + c * hw);
+      ctx.lineTo(p.x + c * len, p.y + n * len);
+      ctx.lineTo(p.x + n * hw, p.y - c * hw);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = THEME.ivory;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(p.x + c * 10, p.y + n * 10);
+      ctx.lineTo(p.x + c * len, p.y + n * len);
+      ctx.stroke();
+    } else {
+      // Espada e Montante: arco; o Montante é mais largo, grosso e em brasa.
+      const heavy = st.weapon === 'greatsword', start = s.dir - st.arc / 2, end = start + st.arc * sweep;
+      ctx.strokeStyle = heavy ? 'rgba(255,140,60,0.9)' : 'rgba(255,214,140,0.9)';
+      ctx.lineWidth = heavy ? 16 : 9;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, range - (heavy ? 14 : 10), start, end);
+      ctx.stroke();
+      ctx.strokeStyle = THEME.ivory;
+      ctx.lineWidth = heavy ? 4 : 3;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, range - 3, start, end);
+      ctx.stroke();
+    }
     ctx.restore();
   }
 

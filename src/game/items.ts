@@ -1,5 +1,6 @@
 // Equipamentos com raridade (GDD/VISUAL_DIRECTION: equipamentos, raridades e builds).
 // Cada item tem um slot e modificadores; o mais forte é equipado ao pegar, o resto vira cinzas.
+import type { WeaponKind } from './config.ts';
 
 export type Slot = 'weapon' | 'armor' | 'relic';
 export type Rarity = 0 | 1 | 2 | 3;
@@ -31,10 +32,15 @@ export const RARITY = [
   { name: 'Lendário', color: '#ff7a3d', ashes: 8 },
 ] as const;
 
-const BASES: Record<Slot, string[]> = {
-  weapon: ['Espada Longa', 'Lâmina Penitente', 'Montante Sagrado'],
+const BASES: Record<Exclude<Slot, 'weapon'>, string[]> = {
   armor: ['Cota de Malha', 'Placas do Cruzado', 'Manto do Peregrino'],
   relic: ['Relicário de Osso', 'Rosário de Brasas', 'Fragmento de Auréola'],
+};
+/** Armas encontradas são do arquétipo em uso (o golpe não muda ao trocar de arma). */
+const WEAPON_BASES: Record<WeaponKind, string[]> = {
+  sword: ['Espada Longa', 'Lâmina Penitente', 'Espada do Cruzado'],
+  greatsword: ['Montante', 'Montante Sagrado', 'Lâmina do Carrasco'],
+  estoc: ['Estoque', 'Estoque do Peregrino', 'Agulha de Prata'],
 };
 const SUFFIX = ['', ' Benta', ' do Mártir', ' do Anjo Caído'];
 
@@ -45,7 +51,7 @@ export function rollRarity(rng: () => number, depth: number, minRarity: Rarity =
   return Math.max(rolled, minRarity) as Rarity;
 }
 
-export function rollItem(rng: () => number, depth: number, minRarity: Rarity = 0): Item {
+export function rollItem(rng: () => number, depth: number, minRarity: Rarity = 0, weapon: WeaponKind = 'sword'): Item {
   const slot = (['weapon', 'armor', 'relic'] as const)[Math.floor(rng() * 3)];
   const rarity = rollRarity(rng, depth, minRarity);
   const tier = 1 + 0.15 * depth, q = rarity;
@@ -60,7 +66,8 @@ export function rollItem(rng: () => number, depth: number, minRarity: Rarity = 0
     mods.feRegen = round2((1 + 1.2 * q) * tier);
     if (q >= 1) mods.skillCdPct = round2(0.06 + 0.04 * q);
   }
-  const base = BASES[slot][Math.floor(rng() * BASES[slot].length)];
+  const names = slot === 'weapon' ? WEAPON_BASES[weapon] : BASES[slot];
+  const base = names[Math.floor(rng() * names.length)];
   return { slot, rarity, name: base + SUFFIX[rarity], mods };
 }
 

@@ -63,6 +63,53 @@ const ENEMIES: Record<EnemyKind, EnemyDef> = {
   },
 };
 
+/** Arquétipos de arma (GDD): escolhidos no menu antes da incursão. */
+export type WeaponKind = 'sword' | 'greatsword' | 'estoc';
+
+export interface WeaponDef {
+  name: string;
+  text: string;
+  /** Multiplicadores sobre CONFIG.player.attack. */
+  damage: number;
+  range: number;
+  cooldown: number;
+  knockback: number;
+  /** Abertura do golpe, em radianos. */
+  arc: number;
+  /** Preparação, janela de dano e rastro do golpe (segundos). */
+  windup: number;
+  active: number;
+  trail: number;
+  /** Fração da velocidade de movimento durante o golpe. */
+  moveFactor: number;
+  /** Chance de crítico somada à base. */
+  crit: number;
+  /** Multiplicador da Fé ganha por golpe que acerta. */
+  feGain: number;
+  /** Quebra a guarda: o golpe interrompe a preparação de inimigos que cambaleiam. */
+  breaksGuard: boolean;
+  /** Desenho do rastro: arco (corte) ou estocada (linha). */
+  shape: 'arc' | 'thrust';
+}
+
+const WEAPONS: Record<WeaponKind, WeaponDef> = {
+  sword: {
+    name: 'Espada Longa', text: 'Corte em arco médio e equilibrado. Cada golpe que acerta rende o dobro de Fé para a Ira Flamejante.',
+    damage: 1, range: 1, cooldown: 1, knockback: 1, arc: 2.2, windup: 0.05, active: 0.1, trail: 0.08, moveFactor: 0.45, crit: 0, feGain: 2,
+    breaksGuard: false, shape: 'arc',
+  },
+  greatsword: {
+    name: 'Montante', text: 'Corte largo, lento e pesado. Interrompe a preparação de Penitentes e Acólitos.',
+    damage: 1.8, range: 1.2, cooldown: 1.85, knockback: 1.6, arc: 3.0, windup: 0.14, active: 0.12, trail: 0.12, moveFactor: 0.25, crit: 0, feGain: 1,
+    breaksGuard: true, shape: 'arc',
+  },
+  estoc: {
+    name: 'Estoque', text: 'Estocada longa, estreita e rápida, com mais crítico. Exige mira.',
+    damage: 0.8, range: 1.4, cooldown: 0.85, knockback: 0.6, arc: 0.6, windup: 0.04, active: 0.07, trail: 0.07, moveFactor: 0.6, crit: 0.1, feGain: 1,
+    breaksGuard: false, shape: 'thrust',
+  },
+};
+
 export const CONFIG = {
   tile: 32,
   view: { w: 960, h: 544 },
@@ -82,20 +129,14 @@ export const CONFIG = {
     maxHp: 100,
     radius: 10,
     speed: 210,
-    /** Multiplicador de velocidade enquanto o golpe está ativo. */
-    swingMoveFactor: 0.45,
     iframes: 1.0,
     hurtKnockback: 320,
     critChance: 0.08,
     critMult: 1.75,
+    /** Golpe base; cada arma (WEAPONS) multiplica estes valores e define abertura e tempos. */
     attack: {
       damage: 10,
       range: 46,
-      arc: 2.2,
-      windup: 0.05,
-      active: 0.1,
-      /** Tempo que o rastro do golpe continua visível após o dano. */
-      trail: 0.08,
       cooldown: 0.34,
       /** Janela em que um clique antecipado ainda vira golpe. */
       buffer: 0.15,
@@ -129,6 +170,7 @@ export const CONFIG = {
   },
 
   enemies: ENEMIES,
+  weapons: WEAPONS,
 
   /** Abaixo desta fração de vida o chefe entra na fase 2; preparações ficam mais curtas. */
   bossPhase2: 0.5,
