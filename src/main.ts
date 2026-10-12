@@ -2,7 +2,7 @@ import { createSfx } from './audio/sfx.ts';
 import { CONFIG } from './game/config.ts';
 import { buyMeta, createGame, pickReward, quitToMenu, setPaused, setReduceMotion, setVolume, startRun, updateGame, type Screen } from './game/game.ts';
 import { FIRST_ROOM } from './game/rooms.ts';
-import { createWorld, type World } from './game/world.ts';
+import { createWorld, enterRoom, type World } from './game/world.ts';
 import { createInput } from './input/input.ts';
 import type { StorageLike } from './persistence/save.ts';
 import { loadImages } from './rendering/assets.ts';
@@ -149,3 +149,9 @@ requestAnimationFrame(frame);
 
 // Exposto para os testes de fumaça no navegador (docs/TEST_PLAN.md).
 (window as unknown as { __game: typeof game }).__game = game;
+// Atalhos de depuração só com ?debug na URL: __debug.room(4) pula para a sala do chefe.
+if (new URLSearchParams(location.search).has('debug')) {
+  (window as unknown as { __debug: unknown }).__debug = {
+    room: (depth: number) => game.world && enterRoom(game.world, depth),
+  };
+}

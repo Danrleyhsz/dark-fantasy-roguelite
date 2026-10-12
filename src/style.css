@@ -344,3 +344,11 @@ body.touch[data-screen='playing'] #touch { display: block; }
   background: var(--wine);
   border: 2px solid var(--ivory);
 }
+
+/* Ilustração de capa (UI) atrás do menu e das telas finais, escurecida para o texto continuar legível. */
+#menu, #end {
+  background:
+    linear-gradient(180deg, rgba(10, 9, 8, 0.55), rgba(10, 9, 8, 0.82) 55%, rgba(10, 9, 8, 0.94)),
+    var(--key-art, none) center / cover no-repeat,
+    var(--charcoal);
+}

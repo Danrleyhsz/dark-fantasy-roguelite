@@ -120,11 +120,20 @@ export function createRenderer(ctx: CanvasRenderingContext2D, makeCanvas: MakeCa
     order.push(w.player);
     order.sort((a, b) => a.x + a.y - (b.x + b.y));
     screen();
+    let afterPlayer = false, occluded = false;
     for (const o of order) {
       if ('pillar' in o) drawPillar(o, w.time);
       else if ('state' in o) drawEnemy(o, w);
       else if ('kind' in o) drawCorpse(o);
       else drawPlayer(o, w);
+      if (o === w.player) afterPlayer = true;
+      else if (afterPlayer && !occluded) occluded = covers(o as Pillar | Enemy | Corpse, w.player);
+    }
+    // Jogador encoberto por algo desenhado depois (coluna, chefe): silhueta por cima, sempre legível.
+    if (occluded && w.player.hp > 0) {
+      ctx.globalAlpha = 0.4;
+      drawPlayer(w.player, w);
+      ctx.globalAlpha = 1;
     }
     for (const q of w.projectiles) drawProjectile(q, w.time);
     drawParticles(w);
@@ -346,6 +355,14 @@ export function createRenderer(ctx: CanvasRenderingContext2D, makeCanvas: MakeCa
     }
   }
 
+  /** O retângulo de tela de `o` (desenhado depois) cobre o corpo do jogador? */
+  function covers(o: Pillar | Enemy | Corpse, p: Player): boolean {
+    const h = 'pillar' in o ? PROP_SIZE[o.kind] * 0.85 : HEIGHT[o.kind] ?? 90;
+    const halfW = 'pillar' in o ? PROP_SIZE[o.kind] * 0.3 : h * 0.35;
+    const ox = isoX(o.x, o.y), oy = isoY(o.x, o.y), px = isoX(p.x, p.y), py = isoY(p.x, p.y);
+    return Math.abs(ox - px) < halfW + 18 && py - 80 < oy && py > oy - h;
+  }
+
   /** Coluna, braseiro, estátua ou candelabro: sprite isométrico da folha de props, base no tile. */
   function drawPillar(p: Pillar, time: number): void {
     const sx = isoX(p.x, p.y), sy = isoY(p.x, p.y);
@@ -446,7 +463,7 @@ export function createRenderer(ctx: CanvasRenderingContext2D, makeCanvas: MakeCa
     lg.setTransform(1, 0, 0, 1, 0, 0);
     lg.globalCompositeOperation = 'source-over';
     lg.clearRect(0, 0, lw, lh);
-    lg.fillStyle = 'rgba(6,8,16,0.6)';
+    lg.fillStyle = 'rgba(6,8,16,0.5)';
     lg.fillRect(0, 0, lw, lh);
     lg.globalCompositeOperation = 'destination-out';
     const flick = settings.reduceMotion ? 0 : Math.sin(w.time * 11) * 0.04;

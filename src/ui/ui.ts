@@ -54,6 +54,10 @@ export function createUI(game: Game, h: UIHandlers): UI {
     const i = ['Digit1', 'Digit2', 'Digit3'].indexOf(e.code);
     if (i >= 0 && game.world.offer[i]) h.pick(game.world.offer[i]);
   });
+  // Ilustração de capa atrás do menu e das telas finais (caminho relativo: funciona em subpastas).
+  // URL absoluta: url() relativa numa variável CSS seria resolvida a partir do arquivo de estilo.
+  const keyArt = art.keyArt?.src;
+  if (keyArt) for (const el of [menu, end]) el.style.setProperty('--key-art', `url("${new URL(keyArt, document.baseURI).href}")`);
   paintIcon($('slot-attack').querySelector('.slot-icon')!, ICON.attack);
   paintIcon($('slot-dodge').querySelector('.slot-icon')!, ICON.dodge);
   paintIcon($('slot-skill').querySelector('.slot-icon')!, ICON.skill);

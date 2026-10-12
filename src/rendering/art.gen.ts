@@ -86,6 +86,36 @@ export const ART = {
       "candelabra"
     ]
   },
+  "icons": {
+    "src": "assets/ui/icons.png",
+    "frameW": 100,
+    "frameH": 100,
+    "anchorX": 50,
+    "anchorY": 50,
+    "frames": [
+      "vigor",
+      "reach",
+      "swift",
+      "shadowStep",
+      "lifesteal",
+      "thorns",
+      "holyWave",
+      "deflect",
+      "ash",
+      "weapon",
+      "armor",
+      "relic",
+      "attack",
+      "dodge",
+      "skill",
+      "level"
+    ]
+  },
+  "keyArt": {
+    "src": "assets/ui/key-art.jpg",
+    "width": 1600,
+    "height": 893
+  },
   "floor": {
     "src": "assets/environment/floor.jpg",
     "width": 512,

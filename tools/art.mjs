@@ -22,6 +22,13 @@ const JOBS = [
   // Props: linha de cima frontal (aplicada nas faces das paredes), de baixo isométrica.
   // No modo 'box' cada prop cabe numa célula quadrada; os altos ocupam a altura inteira (base embaixo).
   { id: 'props', src: 'art/raw/iso/props-a.jpg', out: 'environment/props.png', grid: [4, 2], gridLines: true, frames: ['window', 'doorClosed', 'doorOpen', 'plaque', 'column', 'brazier', 'statue', 'candelabra'], fit: 'box', size: 224 },
+  // Ícones (UI-002): 8 bênçãos, cinzas, arma/armadura/relíquia, golpe/esquiva/habilidade, nível.
+  {
+    id: 'icons', src: 'art/raw/iso/icons.jpg', out: 'ui/icons.png', grid: [4, 4], gridLines: true, fit: 'box', size: 96,
+    frames: ['vigor', 'reach', 'swift', 'shadowStep', 'lifesteal', 'thorns', 'holyWave', 'deflect', 'ash', 'weapon', 'armor', 'relic', 'attack', 'dodge', 'skill', 'level'],
+  },
+  // Ilustração do menu (não é cenário jogável).
+  { id: 'keyArt', texture: true, src: 'art/raw/iso/key-art.jpg', out: 'ui/key-art.jpg', width: 1600, height: 893 },
   // Texturas: só redimensionadas (cobrindo o quadro) e comprimidas.
   // Ladrilháveis: 512 px = FLOOR_TILE (256) e 384 px = WALL_TILE (192) px lógicos no render.
   // linear [a, b] = a*v + b: comprime o contraste e clareia as lajes escuras (leitura dos personagens).

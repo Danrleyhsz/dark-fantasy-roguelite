@@ -228,7 +228,8 @@ export function gainXp(w: World, amount: number): void {
   if (p.level >= CONFIG.levels.max) p.xp = 0;
 }
 
-function enterRoom(w: World, depth: number): void {
+/** Entra na sala `depth` da incursão (também usado pelo atalho de depuração `?debug`). */
+export function enterRoom(w: World, depth: number): void {
   const last = depth === w.totalRooms - 1;
   let room = depth === 0 ? START_ROOM : last ? BOSS_ROOM : ROOM_POOL[Math.floor(w.rng() * ROOM_POOL.length)];
   // Evita repetir a mesma sala intermediária em seguida.
